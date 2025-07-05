@@ -1,10 +1,10 @@
 # Algutor
 A tutor for those who begin to learn algorithm  
 
-Contributor:
-&nbsp;&nbsp;&nbsp;&nbsp;FurryEgg
-&nbsp;&nbsp;&nbsp;&nbsp;ZetilExhila
-&nbsp;&nbsp;&nbsp;&nbsp;Paradise
+Contributor:\
+&nbsp;&nbsp;&nbsp;&nbsp;FurryEgg\
+&nbsp;&nbsp;&nbsp;&nbsp;ZetilExhila\
+&nbsp;&nbsp;&nbsp;&nbsp;Paradise\
 
 /code-tutor  
 &nbsp;&nbsp;&nbsp;&nbsp;├── frontend      # 前端代码  
