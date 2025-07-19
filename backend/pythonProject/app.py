@@ -22,7 +22,7 @@ KNOWLEDGE_BASE = {
 }
 
 
-@app.route('/api/knowledge/<topic>', methods=['GET'])
+@app.route('/api/knowledge/<topic>', methods=['GET', 'POST'])
 def get_knowledge(topic):
     # 从"数据库"查询知识点
     explanation = KNOWLEDGE_BASE.get(topic, "知识点未收录")
