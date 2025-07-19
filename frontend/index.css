@@ -1,0 +1,70 @@
+body{
+  margin: 0;
+  height: 100vh;
+}
+.container{
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+.left{
+  box-sizing: border-box;
+  width: 20%;
+  background-color: rgb(204, 204, 204);
+  border-radius: 10px;
+  margin: 1%;
+  padding-left: 2%;
+}
+.history{
+  color: rgb(49, 49, 49);
+}
+.right{
+  box-sizing: border-box;
+  width: 80%;
+  margin: 1%;
+  border-radius: 10px;
+  border: solid;
+  border-color: rgb(224, 224, 224);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+.inputTitle h1{
+  color: rgb(78, 78, 78);
+  font-size: 5vh;
+}
+.inputBox{
+  width: 70vw;
+  height: 20vh;
+  border-radius: 20px;
+  border: solid;
+  position: relative;
+}
+#inputBox{
+  width: 80%;
+  height: 75%;
+  padding: 1vw;
+  border-radius: 20px;
+  outline: none;
+  border: none;
+  resize: none;
+}
+#submitButton{
+  position: absolute;
+  right: 1vw;
+  bottom: 1vh;
+  border: none;
+  background-color: rgb(33, 166, 255);
+  color: white;
+  font-size: 3vh;
+  padding-left: 0.7vw;
+  padding-right: 0.7vw;
+  padding-top: 0.2vh;
+  padding-bottom: 0.2vh;
+  border-radius: 5px;
+}
+#submitButton:hover{
+  background-color: rgb(143, 210, 255);
+  cursor: pointer;
+}
