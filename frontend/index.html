@@ -8,13 +8,14 @@
 </head>
 <body>
   <div class="container">
-    <div class="left">
+    <div class="left"><!-- 左侧显示历史记录 -->
       <div class="history"><h2>历史记录</h2></div>
     </div>
-    <div class="right">
-      <div class="inputTitle"><h1>Algutor</h1></div>
-      <div class="inputBox">
-        <form action="#">
+    <div class="right"><!-- 右侧显示提问引擎 -->
+      <!-- 两个div用于flex布局将标题和输入框居中显示 -->
+      <div class="inputTitle"><h1>Algutor</h1></div><!-- 标题 “ Algutor ” -->
+      <div class="inputBox"><!-- 总输入框，用于将提交按钮包裹在输入框内 -->
+        <form action="#" id="inputForm">
           <textarea name="#" id="inputBox" placeholder="请输入您的问题..."></textarea>
           <input type="submit" id="submitButton" value="↑">
         </form>

@@ -1,6 +1,6 @@
 body{
   margin: 0;
-  height: 100vh;
+  height: 100vh;/* 将页面高度设置为可视高度的100%，用于切换分辨率后页面不会发生变形 */
 }
 .container{
   display: flex;
@@ -8,7 +8,7 @@ body{
   height: 100%;
 }
 .left{
-  box-sizing: border-box;
+  box-sizing: border-box;/* 用于设置高度和宽度时将内外边距和边框考虑在内 */
   width: 20%;
   background-color: rgb(204, 204, 204);
   border-radius: 10px;
@@ -25,10 +25,11 @@ body{
   border-radius: 10px;
   border: solid;
   border-color: rgb(224, 224, 224);
+  /* flex布局，居中显示 */
   display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+  justify-content: center;/* 横向居中 */
+  align-items: center;/* 纵向居中 */
+  flex-direction: column;/* 纵向排列 */
 }
 .inputTitle h1{
   color: rgb(78, 78, 78);
@@ -41,11 +42,15 @@ body{
   border: solid;
   position: relative;
 }
+#inputForm{
+  height: 80%;
+}
 #inputBox{
-  width: 80%;
-  height: 75%;
+  width: 92%;
+  height: 100%;
   padding: 1vw;
   border-radius: 20px;
+  /* 隐去输入框的相关线条，使输入框融入父级div */
   outline: none;
   border: none;
   resize: none;
@@ -65,6 +70,7 @@ body{
   border-radius: 5px;
 }
 #submitButton:hover{
+  /* 鼠标光标放在按钮上后颜色变化且光标样式发生变化 */
   background-color: rgb(143, 210, 255);
   cursor: pointer;
 }
