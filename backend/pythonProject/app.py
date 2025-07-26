@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, requests
+from flask import Flask, jsonify
 import os
 
 # 加载环境变量
@@ -22,21 +22,11 @@ KNOWLEDGE_BASE = {
 }
 
 
-@app.route('/api/knowledge/<topic>', methods=['GET'])
+@app.route('/api/knowledge/<topic>', methods=['GET', 'POST'])
 def get_knowledge(topic):
     # 从"数据库"查询知识点
     explanation = KNOWLEDGE_BASE.get(topic, "知识点未收录")
     return jsonify({"topic": topic, "explanation": explanation})
-
-
-@app.route('api/analyze', methods=['POST'])
-def analyze_code():
-    code = requests.json.get('code', '')
-    # 模拟响应
-    return jsonify({
-        'errors': ['第3行：变量未定义'],
-        'knowledge': ['Python变量作用域']
-    })
 
 
 # http://localhost:5000/api/knowledge/recursion
