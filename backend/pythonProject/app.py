@@ -1,11 +1,8 @@
 from flask import Flask, jsonify
 import os
 
-# 加载环境变量
-from dotenv import load_dotenv
 
 app = Flask(__name__)
-load_dotenv()
 
 
 @app.route('/api/ping', methods=['GET'])
