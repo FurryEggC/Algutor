@@ -121,10 +121,26 @@ def update_knowledge(topic):
     knowledge = Knowledge.query.filter_by(topic=topic).first()
 
     # 检查知识点存在，不存在抛 404
-    # Your code...
+    if not knowledge:
+        return jsonify({
+            "status": "error",
+            "message": "知识点不存在"
+        }), 404
 
-    # 用 try-catch 检查数据库是否成功更新数据，异常抛 500
-    # Your code...
+    # 用 try-except 检查数据库是否成功更新数据，异常抛 500
+    try:
+        knowledge.explanation = data['explanation']
+        db.session.commit()
+        return jsonify({
+            "status": "success",
+            "message": "知识点更新成功"
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "status": "error",
+            "message": f"数据库错误: {str(e)}"
+        }), 500
 
 
 @app.route('/api/knowledge/<topic>', methods=['DELETE'])
