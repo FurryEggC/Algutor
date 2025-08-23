@@ -118,12 +118,26 @@ def add_knowledge():
 def update_knowledge(topic):
     # 更新知识点
     data = request.get_json()
+    knowledge = Knowledge.query.filter_by(topic=topic).first()
+
+    # 检查知识点存在，不存在抛 404
+    # Your code...
+
+    # 用 try-catch 检查数据库是否成功更新数据，异常抛 500
+    # Your code...
 
 
 @app.route('/api/knowledge/<topic>', methods=['DELETE'])
 def delete_knowledge(topic):
     # 删除知识点
     knowledge = Knowledge.query.filter_by(topic=topic).first()
+
+    # 检查知识点存在，不存在抛 404
+    # Your code...
+
+    # 用 try-catch 检查数据库是否成功删除数据，异常抛 500
+    # 提示：使用 db.session.delete(knowledge) 删除数据库知识点
+    # Your code...
 
 
 # http://localhost:5000/api/knowledge/recursion
