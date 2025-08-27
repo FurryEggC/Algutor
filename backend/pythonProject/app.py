@@ -57,9 +57,10 @@ def ping():
     })
 
 
-@app.route('/api/knowledge/<topic>', methods=['GET'])
-def get_knowledge(topic):
+@app.route('/api/knowledge', methods=['GET'])
+def get_knowledge():
     # 从数据库查询知识点
+    topic = request.args.get("topic")
     knowledge = Knowledge.query.filter_by(topic=topic).first()
     if knowledge:
         return jsonify({
@@ -114,9 +115,10 @@ def add_knowledge():
         }), 500
 
 
-@app.route('/api/knowledge/<topic>', methods=['PUT'])
-def update_knowledge(topic):
+@app.route('/api/knowledge', methods=['PUT'])
+def update_knowledge():
     # 更新知识点
+    topic = request.args.get("topic")
     data = request.get_json()
     knowledge = Knowledge.query.filter_by(topic=topic).first()
 
@@ -143,9 +145,11 @@ def update_knowledge(topic):
         }), 500
 
 
-@app.route('/api/knowledge/<topic>', methods=['DELETE'])
-def delete_knowledge(topic):
+@app.route('/api/knowledge', methods=['DELETE'])
+def delete_knowledge():
+
     # 删除知识点
+    topic = request.args.get("topic")
     knowledge = Knowledge.query.filter_by(topic=topic).first()
 
     # 检查知识点存在，不存在抛 404
