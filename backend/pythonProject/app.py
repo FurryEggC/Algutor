@@ -152,13 +152,27 @@ def delete_knowledge():
     topic = request.args.get("topic")
     knowledge = Knowledge.query.filter_by(topic=topic).first()
 
-    # 检查知识点存在，不存在抛 404
-    # Your code...
+    # 检查知识点是否存在，不存在则返回404
+    if not knowledge:
+        return jsonify({
+            "status": "error",
+            "message": "知识点不存在"
+        }), 404
 
-    # 用 try-catch 检查数据库是否成功删除数据，异常抛 500
-    # 提示：使用 db.session.delete(knowledge) 删除数据库知识点
-    # Your code...
-
+    # 尝试删除知识点，处理可能的数据库异常
+    try:
+        db.session.delete(knowledge)
+        db.session.commit()
+        return jsonify({
+            "status": "success",
+            "message": "知识点删除成功"
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            "status": "error",
+            "message": f"数据库错误: {str(e)}"
+        }), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
