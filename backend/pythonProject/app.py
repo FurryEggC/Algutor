@@ -174,5 +174,7 @@ def delete_knowledge():
             "message": f"数据库错误: {str(e)}"
         }), 500
 
+
+# bash: ngrok http 5000
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
