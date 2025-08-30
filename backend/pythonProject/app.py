@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from flask_cors import CORS
+
 
 # 自动从项目根目录加载 .env 文件
 load_dotenv()
@@ -23,6 +25,9 @@ db = SQLAlchemy(app)
 
 # 数据库迁移
 migrate = Migrate(app, db)
+
+# 允许所有域名
+CORS(app)
 
 
 class Knowledge(db.Model):
@@ -135,7 +140,8 @@ def update_knowledge():
         db.session.commit()
         return jsonify({
             "status": "success",
-            "message": "知识点更新成功"
+            "message": "知识点更新成功",
+            "data": knowledge.to_dict()
         })
     except Exception as e:
         db.session.rollback()
