@@ -1,0 +1,7 @@
+GET    /api/ping                    # 服务状态检查
+POST   /api/analyse                 # 代码分析
+GET    /api/knowledge              # 获取所有知识点
+GET    /api/knowledge?topic=xxx    # 获取特定知识点
+POST   /api/knowledge              # 添加知识点
+PUT    /api/knowledge?topic=xxx    # 更新知识点
+DELETE /api/knowledge?topic=xxx    # 删除知识点
