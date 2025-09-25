@@ -7,10 +7,13 @@ Contributor:\
 &nbsp;&nbsp;&nbsp;&nbsp;Paradise\
 &nbsp;&nbsp;&nbsp;&nbsp;84QQ
 
-/code-tutor  
-&nbsp;&nbsp;&nbsp;&nbsp;├── frontend      # 前端代码  
-&nbsp;&nbsp;&nbsp;&nbsp;├── backend       # 后端服务  
-&nbsp;&nbsp;&nbsp;&nbsp;├── ai-models     # AI模型脚本  
-&nbsp;&nbsp;&nbsp;&nbsp;├── docs          # 项目文档  
-&nbsp;&nbsp;&nbsp;&nbsp;├── docker-compose.yml  
-&nbsp;&nbsp;&nbsp;&nbsp;└── README.md     # 项目启动指南  
+Project struct
+```
+code-tutor  
+  ├── frontend      # 前端代码  
+  ├── backend       # 后端服务  
+  ├── ai-models     # AI模型脚本  
+  ├── docs          # 项目文档  
+  ├── docker-compose.yml  
+  └── README.md     # 项目启动指南  
+```
