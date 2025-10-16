@@ -1,0 +1,209 @@
+/* ====== 返回按钮 = 伪菜单项 ====== */
+.knowledge-return {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  /* 与 Menu 项相同 */
+  padding: 0 16px;
+  /* 左侧图标对齐 Menu 文字 */
+  color: rgba(255, 255, 255, 0.65);
+  /* 暗色 Menu 默认文字色 */
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+/* 图标与文字间距 */
+.knowledge-return .anticon {
+  margin-right: 10px;
+}
+
+/* hover 高亮 – 同 Menu 项 */
+.knowledge-return:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  /* AntD dark Menu hover 背景 */
+}
+
+/* 激活/点击瞬间 – 同 Menu 项 */
+.knowledge-return:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* index.css 末尾加一段 */
+.knowledge-title {
+  padding-left: 2vw;
+  color: rgb(78, 78, 78);
+  font-weight: bolder;
+  font-size: larger;
+}
+
+/* ========== Sider 滚动条美化 ========== */
+.ant-layout-sider {
+  /* 让自定义滚动条只在纵向出现 */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* 轨道 */
+.ant-layout-sider::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ant-layout-sider::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+/* 滑块 */
+.ant-layout-sider::-webkit-scrollbar-thumb {
+  background: #1890ff;
+  /* AntD 主色*/
+  border-radius: 3px;
+  transition: background 0.3s;
+}
+
+/* 滑块 hover 高亮 */
+.ant-layout-sider::-webkit-scrollbar-thumb:hover {
+  background: #40a9ff;
+}
+
+/* Firefox 兼容 */
+.ant-layout-sider {
+  scrollbar-width: thin;
+  scrollbar-color: #1890ff rgba(255, 255, 255, 0.08);
+}
+
+/* ===== 知识点 ===== */
+.allpage-header,
+.allpage-content {
+  display: flex;
+  justify-content: space-between;
+  /* 左右两端 */
+  align-items: center;
+  /* 垂直居中 */
+  padding: 16px 24px;
+  background: #f5f5f5;
+  /* 与 AntD Card 背景一致 */
+  border-radius: 8px;
+  margin-bottom: 24px;
+  /* 与下方内容拉开距离 */
+  gap: 16px;
+  /* 响应式间距 */
+}
+
+.allpage-content:nth-child(2n) {
+  background: #f9f9f9;
+}
+
+/* 左侧标题 */
+.allpage-header-left,
+.allpage-content-left {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  /* AntD 灰 10 */
+  position: relative;
+  padding-left: 12px;
+  /* 给装饰条留空 */
+  width: 70%;
+}
+
+.allpage-header-left-item:nth-child(1),
+.allpage-content-left-item:nth-child(1) {
+  flex: 1;
+  position: relative;
+  padding-left: 12px;
+}
+
+.allpage-header-left-item:nth-child(2),
+.allpage-header-left-item:nth-child(3),
+
+.allpage-content-left-item:nth-child(2),
+.allpage-content-left-item:nth-child(3) {
+  flex: 1.5;
+  position: relative;
+  padding-left: 12px;
+}
+
+/* 左侧装饰条 */
+.allpage-header-left-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: #1890ff;
+  /* 品牌色 */
+  border-radius: 2px;
+}
+
+/* 响应式调整 */
+@media (max-width: 992px) {
+  .allpage-minner-hidden {
+    display: none;
+  }
+
+  .allpage-header-left,
+  .allpage-content-left {
+    width: auto;
+  }
+
+  .allpage-content-right-item {
+    font-size: 20px;
+    transform: translateX(-12px);
+  }
+
+  .allpage-content-right-item:nth-child(1) {
+    transform: translateX(-24px);
+  }
+}
+
+/* 右侧操作区 */
+.allpage-header-right,
+.allpage-content-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* 按钮之间间距 */
+}
+
+.allpage-content-right {
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 600;
+  /* AntD 灰 10 */
+  position: relative;
+  /* 给装饰条留空 */
+  width: 18%;
+}
+
+.allpage-content-right-item:nth-child(1) {
+  color: #262626;
+}
+
+.allpage-content-right-item:nth-child(2) {
+  color: #ff6363;
+}
+
+.allpage-content-left-item:nth-child(1):hover,
+.allpage-content-right-item:hover {
+  transition: all 0.3s;
+  transform: translateY(-2px);
+  cursor: pointer;
+  color: rgb(126, 126, 126);
+}
+
+.allpage-content-right-item:nth-child(2):hover {
+  color: #ff9c9d;
+}
+
+.allpage-content:hover {
+  transition: all 0.3s;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}

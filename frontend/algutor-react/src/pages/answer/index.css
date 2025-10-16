@@ -1,0 +1,73 @@
+.history {
+  color: rgb(231, 231, 231);
+  text-align: center;
+}
+
+.answer-input-box {
+  width: 70%;
+  height: 10vh;
+  border-radius: 20px;
+  border: solid;
+  position: fixed;
+  bottom: 5%;
+  right: calc(50% - 40%);
+}
+
+@media (max-width: 992px) {
+  .answer-input-box {
+    right: calc(50% - 35%);
+  }
+}
+
+@media (max-width: 400px) {
+  .answer-input-box {
+    height: 6vh;
+    right: calc(50% - 35%);
+  }
+}
+
+#answer-input-box {
+  width: 92%;
+  height: 90%;
+  padding: 1vw;
+  border-radius: 20px;
+  /* 隐去输入框的相关线条，使输入框融入父级div */
+  outline: none;
+  border: none;
+  resize: none;
+}
+
+#answer-input-box:focus,
+#answer-input-box:active {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+#answer-submit-button {
+  position: absolute;
+  right: 1vw;
+  bottom: 1vh;
+  border: none;
+  background-color: rgb(33, 166, 255);
+  color: white;
+  font-size: 2vh;
+  padding-left: 0.7vw;
+  padding-right: 0.7vw;
+  padding-top: 0.2vh;
+  padding-bottom: 0.2vh;
+  border-radius: 15px;
+}
+
+#answer-submit-button:hover {
+  /* 鼠标光标放在按钮上后颜色变化且光标样式发生变化 */
+  background-color: rgb(143, 210, 255);
+  cursor: pointer;
+}
+
+.answer-index-header {
+  padding-left: 2vw;
+  color: rgb(78, 78, 78);
+  font-weight: bolder;
+  font-size: larger;
+}

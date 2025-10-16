@@ -1,0 +1,15 @@
+{
+  "ka": [
+    {
+      "message": "知识点添加成功",
+      "data": {
+        "created_at": "2025-08-27T13:42:08",
+        "explanation": "程序的 “积木单元”，通过def（Python）或function（JavaScript）定义，封装可复用的逻辑。",
+        "id": 4,
+        "topic": "函数",
+        "updated_at": "2025-08-27T13:42:08"
+      },
+      "status": "success"
+    }
+  ]
+}
