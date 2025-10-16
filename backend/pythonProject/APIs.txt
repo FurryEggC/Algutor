@@ -1,5 +1,5 @@
 # 基础服务 API
-GET    /api/ping                    # 服务状态检查
+GET    https://519037327909.ngrok-free.app/api/ping                    # 服务状态检查
 
 # 代码分析 API
 POST   /api/analyse                 # 代码分析（语法检查 + 知识点映射）

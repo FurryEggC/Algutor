@@ -1,0 +1,67 @@
+body,
+#root {
+  margin: 0;
+  height: 100vh;
+  /* 将页面高度设置为可视高度的100%，用于切换分辨率后页面不会发生变形 */
+}
+
+.question-input-title h1 {
+  color: rgb(78, 78, 78);
+  font-size: clamp(20px, 3.5vw, 40px);
+}
+
+.question-input-box {
+  width: 70%;
+  height: 20%;
+  border-radius: 20px;
+  border: solid;
+  position: relative;
+  right: 0;
+}
+
+#question-input-box {
+  width: 92%;
+  height: 90%;
+  padding: 1vw;
+  border-radius: 20px;
+
+  /* 隐去输入框的相关线条，使输入框融入父级div */
+  outline: none;
+  border: none;
+  resize: none;
+}
+
+#question-input-box:focus,
+#question-input-box:active {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+#question-submit-button {
+  position: absolute;
+  right: 1vw;
+  bottom: 1vh;
+  border: none;
+  background-color: rgb(33, 166, 255);
+  color: white;
+  font-size: 2vh;
+  padding-left: 0.7vw;
+  padding-right: 0.7vw;
+  padding-top: 0.2vh;
+  padding-bottom: 0.2vh;
+  border-radius: 15px;
+}
+
+#question-submit-button:hover {
+  /* 鼠标光标放在按钮上后颜色变化且光标样式发生变化 */
+  background-color: rgb(143, 210, 255);
+  cursor: pointer;
+}
+
+.question-index-header {
+  padding-left: 2vw;
+  color: rgb(78, 78, 78);
+  font-weight: bolder;
+  font-size: larger;
+}
