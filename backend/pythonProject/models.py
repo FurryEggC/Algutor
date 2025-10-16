@@ -3,21 +3,22 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+
 class Knowledge(db.Model):
     __tablename__ = 'knowledge'
     id = db.Column(db.Integer, primary_key=True)
     topic = db.Column(db.String(100), unique=True, nullable=False)
     explanation = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
 
     def to_dict(self):
         return {
             "id": self.id,
             "topic": self.topic,
             "explanation": self.explanation,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S")
         }
 
 
