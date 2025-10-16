@@ -8,6 +8,7 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+
 # 配置
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
     'DATABASE_URL',
@@ -76,6 +77,7 @@ def handle_knowledge():
         return update_knowledge()
     elif request.method == 'DELETE':
         return delete_knowledge()
+    return None
 
 
 def get_knowledge():
@@ -167,7 +169,7 @@ def ai_explain_code():
         # 保存到数据库
         ai_record = AICodeGeneration(
             original_prompt=prompt,
-            generated_content="explanation...",
+            generated_content="explanations...",
             language=language,
             function_type="explain"
         )

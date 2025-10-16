@@ -8,15 +8,30 @@ POST   /api/analyse                 # 代码分析（语法检查 + 知识点映
 GET    /api/knowledge               # 获取所有知识点
 GET    /api/knowledge?topic=xxx     # 获取特定知识点
 POST   /api/knowledge               # 添加知识点
+    topic: ...
+    explanation: ...
 PUT    /api/knowledge?topic=xxx     # 更新知识点
+    topic: ...
+    explanation: ...
 DELETE /api/knowledge?topic=xxx     # 删除知识点
 
 # AI 编程助手 API（演示模式）
 POST   /api/ai/explain              # AI代码解释（带数据库保存）
+    code: ...
+    language: ...(optional, python default)
 POST   /api/ai/generate             # AI代码生成（带数据库保存）
+    requirement: ...
+    language: ...(optional, python default)
 POST   /api/ai/solve                # AI算法求解（带数据库保存）
+    problem: ...
+    language: ...(optional, python default)
 POST   /api/ai/debug                # AI代码调试（带数据库保存）
+    code: ...
+    error: ...(optional)
+    language: ...(optional, python default)
 GET    /api/ai/history              # 获取AI生成历史
-GET    /api/ai/history?type=xxx     # 按类型获取AI历史
+    function_type: ...
+    limit: int
+GET    /api/ai/history?type=xxx     # 按类型获取AI历
 GET    /api/ai/history?limit=xxx    # 限制返回数量
 DELETE /api/ai/history/<record_id>  # 删除特定AI记录
