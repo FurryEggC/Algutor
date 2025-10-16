@@ -9,7 +9,7 @@ import {
   EditOutlined,
   DeleteOutlined
 } from '@ant-design/icons';
-import { Layout, Menu, theme, Button, Form, Radio, Modal, Input, Tooltip } from 'antd';
+import { Layout, Menu, theme, Button, Form, Modal, Input, Tooltip } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import './index.css';
 import { useState, useEffect } from 'react';
@@ -17,43 +17,46 @@ import axios from 'axios';
 
 const { Header, Content, Footer, Sider } = Layout;
 // 异步请求
-async function addKnowledge(values) {
-  try {
-    const res = await axios({
-      url: 'https://519037327909.ngrok-free.app/api/knowledge',
-      method: 'POST',
-      data: {
-        topic: values.topic,
-        explanation: values.explanation
-      }
-    })
-  } catch (error) {
-    console.log(error);
-  }
-}
-async function editKnowledge(values) {
-  try {
-    const res = await axios({
-      url: `https://519037327909.ngrok-free.app/api/knowledge?topic=${values.topic}`,
-      method: 'PUT',
-      data: {
-        topic: values.topic,
-        explanation: values.explanation
-      }
-    })
-  } catch (error) {
-    console.log(error);
-  }
-}
+
+
 
 /* ② 两个子页面 ************************************************************/
 function AllPage() {
   // 添加知识点功能变量和函数
   const [addForm] = Form.useForm();
-  const [addFormValues, setAddFormValues] = useState();
   const [addOpen, setAddOpen] = useState(false);
-
   const [contentItem, setContentItem] = useState([]);
+  async function addKnowledge(values) {
+    try {
+      await axios({
+        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
+        method: 'POST',
+        data: {
+          topic: values.topic,
+          explanation: values.explanation
+        },
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      const res = await axios({
+        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      setContentItem(res.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  const setAddCreate = values => {
+    console.log('Received values of form: ', values);
+    addKnowledge(values);
+    setAddOpen(false);
+  };
+  // 页面初次渲染获取所有知识点
   useEffect(() => {
     async function getKnowledge() {
       try {
@@ -72,25 +75,39 @@ function AllPage() {
     }
     getKnowledge();
   }, []);
-
-  const setAddCreate = values => {
-    console.log('Received values of form: ', values);
-    addKnowledge(values);
-    values.id = contentItem.length + 1;
-    setContentItem([...contentItem, values]);
-    setAddFormValues(values);
-    setAddOpen(false);
-  };
   // 修改知识点功能变量和函数
   const [editForm] = Form.useForm();
-  const [editFormValues, setEditFormValues] = useState();
   const [editOpen, setEditOpen] = useState(false);
+  async function editKnowledge(values) {
+    try {
+      await axios({
+        url: `https://30841f5ebb16.ngrok-free.app/api/knowledge?topic=${values.topic}`,
+        method: 'PUT',
+        data: {
+          explanation: values.explanation
+        },
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      const res = await axios({
+        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      setContentItem(res.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   const setEditCreate = values => {
     console.log('Received values of form: ', values);
-    setContentItem([...contentItem, values]);
-    setEditFormValues(values);
+    editKnowledge(values);
     setEditOpen(false);
   };
+  // 表单中显示原默认值
   const handleEdit = (item) => {
     setEditOpen(true);
     editForm.setFieldsValue({
@@ -98,6 +115,29 @@ function AllPage() {
       explanation: item.explanation,
     });
   }
+  // 删除知识点
+  async function deleteKnowledge(item) {
+    try {
+      await axios({
+        url: `https://30841f5ebb16.ngrok-free.app/api/knowledge?topic=${item.topic}`,
+        method: 'DELETE',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      const res2 = await axios({
+        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      setContentItem(res2.data.data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  // 路由跳转
   const navigate = useNavigate();
   return (
     <>
@@ -200,7 +240,7 @@ function AllPage() {
                 <EditOutlined /> <span className="allpage-minner-hidden">编辑</span>
               </Tooltip>
             </div>
-            <div className="allpage-content-right-item">
+            <div className="allpage-content-right-item" onClick={() => deleteKnowledge(item)}>
               <Tooltip title="删除" placement="top">
                 <DeleteOutlined /> <span className="allpage-minner-hidden">删除</span>
               </Tooltip>
