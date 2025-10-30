@@ -35,7 +35,7 @@ function AllPage() {
       })
       setContentItem(res.data.data);
     } catch (error) {
-      // navigate('/error');
+      navigate('/error');
     }
   }
   async function addKnowledge(values) {
@@ -53,7 +53,7 @@ function AllPage() {
       })
       getKnowledge();
     } catch (error) {
-      // navigate('/error');;
+      navigate('/error');;
     }
   }
   const setAddCreate = values => {
@@ -82,7 +82,7 @@ function AllPage() {
       })
       getKnowledge();
     } catch (error) {
-      // navigate('/error');;
+      navigate('/error');;
     }
   }
   const setEditCreate = values => {
@@ -110,7 +110,7 @@ function AllPage() {
       })
       getKnowledge();
     } catch (error) {
-      // navigate('/error');;
+      navigate('/error');;
     }
   }
   // 路由跳转
@@ -296,7 +296,7 @@ function TopicPage({ topic }) {
         })
         setExplanation(res.data.data.explanation);
       } catch (error) {
-        // navigate('/error');
+        navigate('/error');
       }
     }
     getExplanation();
@@ -347,7 +347,7 @@ function Knowledge() {
         });
         setNav(items);
       } catch (error) {
-        // navigate('/error');
+        navigate('/error');
       }
     }
     getKnowledge();
