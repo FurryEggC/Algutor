@@ -1,0 +1,98 @@
+/* ====== 返回按钮 = 伪菜单项 ====== */
+.error-return {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  /* 与 Menu 项相同 */
+  padding: 0 16px;
+  /* 左侧图标对齐 Menu 文字 */
+  color: rgba(255, 255, 255, 0.65);
+  /* 暗色 Menu 默认文字色 */
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+/* 图标与文字间距 */
+.error-return .anticon {
+  margin-right: 10px;
+}
+
+/* hover 高亮 – 同 Menu 项 */
+.error-return:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  /* AntD dark Menu hover 背景 */
+}
+
+/* 激活/点击瞬间 – 同 Menu 项 */
+.error-return:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.error-h2 h2 {
+  font: 15px '微软雅黑';
+  margin: 16px 0;
+  color: rgb(156, 156, 156);
+}
+
+/* ---- 错误页内容区域 ---- */
+.error-content {
+  height: 100%;
+  /* 撑满父级 flex:1 区域 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* 垂直居中 */
+  align-items: center;
+  /* 水平居中 */
+  text-align: center;
+  padding: 48px 24px;
+  gap: 16px;
+}
+
+/* 图标圈 */
+.error-icon {
+  font-size: 64px;
+  color: #ff4d4f;
+  background: #fff1f0;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+
+  /* 关键：flex 居中 */
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+  justify-content: center;
+  /* 水平居中 */
+
+  /* 去掉图标自带行高干扰 */
+  line-height: 1;
+}
+
+/* 标题 */
+.error-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #262626;
+  /* 深灰标题 */
+  margin: 0;
+}
+
+/* 描述文字 */
+.error-desc {
+  font-size: 14px;
+  color: #595959;
+  /* 中性灰 */
+  max-width: 420px;
+  /* 限制阅读宽度 */
+  line-height: 1.6;
+}
+
+/* 返回按钮 */
+.error-back-btn {
+  margin-top: 24px;
+}

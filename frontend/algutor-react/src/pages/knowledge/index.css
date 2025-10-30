@@ -30,12 +30,36 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
-/* index.css 末尾加一段 */
+/* 页头标题 */
 .knowledge-title {
-  padding-left: 2vw;
-  color: rgb(78, 78, 78);
-  font-weight: bolder;
-  font-size: larger;
+  margin: 0;
+  padding: 0 24px;
+  /* 左右留空，视觉对齐 AntD Header */
+  height: 64px;
+  /* 与 AntD 默认 Header 同高 */
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+  position: relative;
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+  /* AntD 灰 10 */
+  line-height: 1;
+}
+
+/* 左侧 3 px 品牌色高亮条 */
+.knowledge-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  background: #1890ff;
+  /* AntD 主色 */
+  border-radius: 2px;
 }
 
 /* ========== Sider 滚动条美化 ========== */
@@ -206,4 +230,58 @@
 .allpage-content:hover {
   transition: all 0.3s;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+
+/* ---- 暂无数据空态 ---- */
+.allpage-no-knowledge {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  color: #8c8c8c;
+  /* 中性灰 */
+  background: #fafafa;
+  /* 比纯白更柔和 */
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+/* 大图标 */
+.allpage-no-knowledge .anticon {
+  /* 圆形尺寸 */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* 关键：flex 居中 */
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+  justify-content: center;
+  /* 水平居中 */
+
+  /* 去掉图标自带行高干扰 */
+  font-size: 80px;
+  color: #d9d9d9;
+  line-height: 1;
+}
+
+/* 主文案 */
+.allpage-no-knowledge .empty-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #595959;
+  margin: 0;
+}
+
+/* 副文案 */
+.allpage-no-knowledge .empty-desc {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
 }

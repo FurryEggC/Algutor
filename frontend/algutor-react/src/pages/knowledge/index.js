@@ -7,7 +7,8 @@ import {
   FieldTimeOutlined,
   HistoryOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  InboxOutlined
 } from '@ant-design/icons';
 import { Layout, Menu, theme, Button, Form, Modal, Input, Tooltip } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -16,9 +17,6 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const { Header, Content, Footer, Sider } = Layout;
-// 异步请求
-
-
 
 /* ② 两个子页面 ************************************************************/
 function AllPage() {
@@ -26,6 +24,20 @@ function AllPage() {
   const [addForm] = Form.useForm();
   const [addOpen, setAddOpen] = useState(false);
   const [contentItem, setContentItem] = useState([]);
+  async function getKnowledge() {
+    try {
+      const res = await axios({
+        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
+        method: 'GET',
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
+      })
+      setContentItem(res.data.data);
+    } catch (error) {
+      // navigate('/error');
+    }
+  }
   async function addKnowledge(values) {
     try {
       await axios({
@@ -39,16 +51,9 @@ function AllPage() {
           'ngrok-skip-browser-warning': 'true'
         }
       })
-      const res = await axios({
-        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
-        method: 'GET',
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
-      })
-      setContentItem(res.data.data);
+      getKnowledge();
     } catch (error) {
-      console.log(error);
+      // navigate('/error');;
     }
   }
   const setAddCreate = values => {
@@ -58,21 +63,6 @@ function AllPage() {
   };
   // 页面初次渲染获取所有知识点
   useEffect(() => {
-    async function getKnowledge() {
-      try {
-        const res = await axios({
-          url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
-          method: 'GET',
-          headers: {
-            'ngrok-skip-browser-warning': 'true'
-          }
-        })
-        // console.log(res)
-        setContentItem(res.data.data);
-      } catch (error) {
-        console.log(error)
-      }
-    }
     getKnowledge();
   }, []);
   // 修改知识点功能变量和函数
@@ -90,16 +80,9 @@ function AllPage() {
           'ngrok-skip-browser-warning': 'true'
         }
       })
-      const res = await axios({
-        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
-        method: 'GET',
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
-      })
-      setContentItem(res.data.data);
+      getKnowledge();
     } catch (error) {
-      console.log(error);
+      // navigate('/error');;
     }
   }
   const setEditCreate = values => {
@@ -125,16 +108,9 @@ function AllPage() {
           'ngrok-skip-browser-warning': 'true'
         }
       })
-      const res2 = await axios({
-        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
-        method: 'GET',
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
-      })
-      setContentItem(res2.data.data);
+      getKnowledge();
     } catch (error) {
-      console.log(error);
+      // navigate('/error');;
     }
   }
   // 路由跳转
@@ -202,7 +178,10 @@ function AllPage() {
               label="知识点"
               rules={[{ required: true, message: '请输入知识点！' }]}
             >
-              <Input />
+              <Input
+                autoComplete="off"        // 1. 关闭自动填充
+                spellCheck="false"        // 2. 关闭拼写检查 
+              />
             </Form.Item>
             <Form.Item name="explanation" label="内容" rules={[{ required: true, message: '请输入内容！' }]}>
               <Input.TextArea style={
@@ -217,7 +196,7 @@ function AllPage() {
         </div>
       </div>
       {/* 内容 */}
-      {contentItem.map(item => (
+      {contentItem.length > 0 ? contentItem.map(item => (
         <div className="allpage-content" key={item.id}>
           {/* 左侧内容布局 */}
           <div className="allpage-content-left">
@@ -247,7 +226,13 @@ function AllPage() {
             </div>
           </div>
         </div>
-      ))}
+      )) : (
+        <div className="allpage-no-knowledge">
+          <InboxOutlined />
+          <p className="empty-title">暂无知识点</p>
+          <p className="empty-desc">点击右上角「添加知识点」创建第一条记录</p>
+        </div>
+      )}
       {/* 弹窗：编辑知识点 */}
       <Modal
         open={editOpen}
@@ -275,7 +260,11 @@ function AllPage() {
           label="知识点"
           rules={[{ required: true, message: '请输入知识点！' }]}
         >
-          <Input />
+          <Input
+            autoComplete="off"        // 1. 关闭自动填充
+            spellCheck="false"        // 2. 关闭拼写检查
+            readOnly
+          />
         </Form.Item>
         <Form.Item name="explanation" label="内容" rules={[{ required: true, message: '请输入内容！' }]}>
           <Input.TextArea style={
@@ -293,17 +282,31 @@ function AllPage() {
 }
 
 function TopicPage({ topic }) {
-  return <div> {/* 内容代码区 */}
-    <p>long content</p>
-    {
-      // indicates very long content
-      Array.from({ length: 100 }, (_, index) => (
-        <React.Fragment key={index}>
-          {index % 20 === 0 && index ? 'more' : '...'}
-          <br />
-        </React.Fragment>
-      ))
-    }</div>;
+  const navigate = useNavigate();
+  const [explanation, setExplanation] = useState('');
+  useEffect(() => {
+    async function getExplanation() {
+      try {
+        const res = await axios({
+          url: `https://30841f5ebb16.ngrok-free.app/api/knowledge?topic=${topic}`,
+          method: 'GET',
+          headers: {
+            'ngrok-skip-browser-warning': 'true'
+          }
+        })
+        setExplanation(res.data.data.explanation);
+      } catch (error) {
+        // navigate('/error');
+      }
+    }
+    getExplanation();
+  }, [])
+  return (
+    <>
+      {/* 内容代码区 */}
+      <div className="knowledge-explanation">{explanation}</div>
+    </>
+  );
 }
 
 /* ③ 主组件 ***************************************************************/
@@ -314,7 +317,12 @@ function Knowledge() {
 
   const { token } = theme.useToken();
 
-  const [nav, setNav] = useState([]);
+  const [nav, setNav] = useState([{                     // key = 0  →  “全部”
+    key: '0',
+    icon: <BarsOutlined />,
+    label: '全部',
+    topic: '全部',
+  }]);
   useEffect(() => {
     async function getKnowledge() {
       try {
@@ -325,7 +333,6 @@ function Knowledge() {
             'ngrok-skip-browser-warning': 'true'
           }
         })
-        // console.log(res)
         const items = res.data.data.map(item => ({
           key: item.id,
           icon: <BookOutlined />,
@@ -340,7 +347,7 @@ function Knowledge() {
         });
         setNav(items);
       } catch (error) {
-        console.log(error)
+        // navigate('/error');
       }
     }
     getKnowledge();
