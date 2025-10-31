@@ -27,11 +27,8 @@ function AllPage() {
   async function getKnowledge() {
     try {
       const res = await axios({
-        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
-        method: 'GET',
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
+        url: 'http://124.70.90.83:5000/api/knowledge',
+        method: 'GET'
       })
       setContentItem(res.data.data);
     } catch (error) {
@@ -41,14 +38,11 @@ function AllPage() {
   async function addKnowledge(values) {
     try {
       await axios({
-        url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
+        url: 'http://124.70.90.83:5000/api/knowledge',
         method: 'POST',
         data: {
           topic: values.topic,
           explanation: values.explanation
-        },
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
         }
       })
       getKnowledge();
@@ -71,13 +65,10 @@ function AllPage() {
   async function editKnowledge(values) {
     try {
       await axios({
-        url: `https://30841f5ebb16.ngrok-free.app/api/knowledge?topic=${values.topic}`,
+        url: `http://124.70.90.83:5000/api/knowledge?topic=${values.topic}`,
         method: 'PUT',
         data: {
           explanation: values.explanation
-        },
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
         }
       })
       getKnowledge();
@@ -102,11 +93,8 @@ function AllPage() {
   async function deleteKnowledge(item) {
     try {
       await axios({
-        url: `https://30841f5ebb16.ngrok-free.app/api/knowledge?topic=${item.topic}`,
-        method: 'DELETE',
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        }
+        url: `http://124.70.90.83:5000/api/knowledge?topic=${item.topic}`,
+        method: 'DELETE'
       })
       getKnowledge();
     } catch (error) {
@@ -288,11 +276,8 @@ function TopicPage({ topic }) {
     async function getExplanation() {
       try {
         const res = await axios({
-          url: `https://30841f5ebb16.ngrok-free.app/api/knowledge?topic=${topic}`,
-          method: 'GET',
-          headers: {
-            'ngrok-skip-browser-warning': 'true'
-          }
+          url: `http://124.70.90.83:5000/api/knowledge?topic=${topic}`,
+          method: 'GET'
         })
         setExplanation(res.data.data.explanation);
       } catch (error) {
@@ -324,14 +309,11 @@ function Knowledge() {
     topic: '全部',
   }]);
   useEffect(() => {
-    async function getKnowledge() {
+    async function getNav() {
       try {
         const res = await axios({
-          url: 'https://30841f5ebb16.ngrok-free.app/api/knowledge',
-          method: 'GET',
-          headers: {
-            'ngrok-skip-browser-warning': 'true'
-          }
+          url: 'http://124.70.90.83:5000/api/knowledge',
+          method: 'GET'
         })
         const items = res.data.data.map(item => ({
           key: item.id,
@@ -350,7 +332,7 @@ function Knowledge() {
         navigate('/error');
       }
     }
-    getKnowledge();
+    getNav();
   }, []);
 
   /* 点击菜单：只改查询参数 → 不刷新页面 */
