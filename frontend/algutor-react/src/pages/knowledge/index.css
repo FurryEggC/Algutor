@@ -285,3 +285,20 @@
   color: #8c8c8c;
   margin: 0;
 }
+
+
+.knowledge-explanation {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #4e5969;
+  padding: 32px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  text-indent: 2em;
+}
+
+.knowledge-explanation:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}

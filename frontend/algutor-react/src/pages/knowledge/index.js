@@ -19,7 +19,7 @@ import axios from 'axios';
 const { Header, Content, Footer, Sider } = Layout;
 
 /* ② 两个子页面 ************************************************************/
-function AllPage() {
+function AllPage({ setNav }) {
   // 添加知识点功能变量和函数
   const [addForm] = Form.useForm();
   const [addOpen, setAddOpen] = useState(false);
@@ -27,10 +27,23 @@ function AllPage() {
   async function getKnowledge() {
     try {
       const res = await axios({
-        url: 'http://124.70.90.83:5000/api/knowledge',
+        url: 'https://124.70.90.83/api/knowledge',
         method: 'GET'
       })
       setContentItem(res.data.data);
+      const items = res.data.data.map(item => ({
+        key: String(item.id),
+        icon: <BookOutlined />,
+        label: item.topic,
+        topic: item.topic,
+      }))
+      items.unshift({                     // key = 0  →  “全部”
+        key: '0',
+        icon: <BarsOutlined />,
+        label: '全部',
+        topic: '全部',
+      });
+      setNav(items);
     } catch (error) {
       navigate('/error');
     }
@@ -38,7 +51,7 @@ function AllPage() {
   async function addKnowledge(values) {
     try {
       await axios({
-        url: 'http://124.70.90.83:5000/api/knowledge',
+        url: 'https://124.70.90.83/api/knowledge',
         method: 'POST',
         data: {
           topic: values.topic,
@@ -65,7 +78,7 @@ function AllPage() {
   async function editKnowledge(values) {
     try {
       await axios({
-        url: `http://124.70.90.83:5000/api/knowledge?topic=${values.topic}`,
+        url: `https://124.70.90.83/api/knowledge?topic=${values.topic}`,
         method: 'PUT',
         data: {
           explanation: values.explanation
@@ -93,7 +106,7 @@ function AllPage() {
   async function deleteKnowledge(item) {
     try {
       await axios({
-        url: `http://124.70.90.83:5000/api/knowledge?topic=${item.topic}`,
+        url: `https://124.70.90.83/api/knowledge?topic=${item.topic}`,
         method: 'DELETE'
       })
       getKnowledge();
@@ -276,7 +289,7 @@ function TopicPage({ topic }) {
     async function getExplanation() {
       try {
         const res = await axios({
-          url: `http://124.70.90.83:5000/api/knowledge?topic=${topic}`,
+          url: `https://124.70.90.83/api/knowledge?topic=${topic}`,
           method: 'GET'
         })
         setExplanation(res.data.data.explanation);
@@ -285,7 +298,7 @@ function TopicPage({ topic }) {
       }
     }
     getExplanation();
-  }, [])
+  }, [topic])
   return (
     <>
       {/* 内容代码区 */}
@@ -308,33 +321,6 @@ function Knowledge() {
     label: '全部',
     topic: '全部',
   }]);
-  useEffect(() => {
-    async function getNav() {
-      try {
-        const res = await axios({
-          url: 'http://124.70.90.83:5000/api/knowledge',
-          method: 'GET'
-        })
-        const items = res.data.data.map(item => ({
-          key: item.id,
-          icon: <BookOutlined />,
-          label: item.topic,
-          topic: item.topic,
-        }))
-        items.unshift({                     // key = 0  →  “全部”
-          key: '0',
-          icon: <BarsOutlined />,
-          label: '全部',
-          topic: '全部',
-        });
-        setNav(items);
-      } catch (error) {
-        navigate('/error');
-      }
-    }
-    getNav();
-  }, []);
-
   /* 点击菜单：只改查询参数 → 不刷新页面 */
   const onMenuClick = (e) => {
     const key = e.key;
@@ -349,7 +335,7 @@ function Knowledge() {
   /* 根据 key 决定渲染哪块“子页面” */
   const renderContent = () =>
     selectedKey === '0' ? (
-      <AllPage />
+      <AllPage setNav={setNav} />
     ) : (
       <TopicPage topic={nav.find((i) => i.key === selectedKey)?.label} />
     );
