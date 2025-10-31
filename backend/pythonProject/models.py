@@ -31,7 +31,7 @@ class AICodeGeneration(db.Model):
     generated_content = db.Column(db.Text, nullable=False)
     language = db.Column(db.String(20), nullable=False)
     function_type = db.Column(db.String(50), nullable=False)  # explain/generate/solve/debug
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
 
     def to_dict(self):
         return {
@@ -52,8 +52,8 @@ class UserSession(db.Model):
     session_id = db.Column(db.String(100), unique=True, nullable=False)
     user_questions = db.Column(db.Text)  # 用户提问历史
     ai_responses = db.Column(db.Text)  # AI回复历史
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
 
     def to_dict(self):
         return {
@@ -64,4 +64,3 @@ class UserSession(db.Model):
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat()
         }
-
