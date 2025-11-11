@@ -9,6 +9,7 @@ class Knowledge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     topic = db.Column(db.String(100), unique=True, nullable=False)
     explanation = db.Column(db.Text, nullable=False)
+    example = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
 
@@ -17,9 +18,20 @@ class Knowledge(db.Model):
             "id": self.id,
             "topic": self.topic,
             "explanation": self.explanation,
+            "example": self.example or {},
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S")
         }
+
+    def add_example(self, language, code):
+        """添加或更新特定语言的示例代码"""
+        if self.example is None:
+            self.example = {}
+        self.example[language] = code
+
+    def get_example(self, language):
+        """获取特定语言的示例代码"""
+        return self.example.get(language) if self.example else None
 
 
 class AICodeGeneration(db.Model):

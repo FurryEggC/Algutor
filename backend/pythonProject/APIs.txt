@@ -1,7 +1,7 @@
 # 基础服务 API
-GET    https://519037327909.ngrok-free.app/api/ping                    # 服务状态检查
+GET    /api/ping                    # 服务状态检查
 
-# 代码分析 API
+# 代码分析 API (In beta)
 POST   /api/analyse                 # 代码分析（语法检查 + 知识点映射）
 
 # 知识点管理 API
@@ -10,11 +10,18 @@ GET    /api/knowledge?topic=xxx     # 获取特定知识点
 POST   /api/knowledge               # 添加知识点
     topic: ...
     explanation: ...
+    example: {
+        "languageA(python, c, cpp, java, javascript)": "...",
+        "languageB": "...",
+        ...
+    }
 PUT    /api/knowledge?topic=xxx     # 更新知识点
     explanation: ...
+    example: see json in POST
 DELETE /api/knowledge?topic=xxx     # 删除知识点
 
-# AI 编程助手 API（演示模式）
+
+# AI 编程助手 API（演示模式） (In beta)
 POST   /api/ai/explain              # AI代码解释（带数据库保存）
     code: ...
     language: ...(optional, python default)
@@ -34,3 +41,6 @@ GET    /api/ai/history              # 获取AI生成历史
 GET    /api/ai/history?type=xxx     # 按类型获取AI历
 GET    /api/ai/history?limit=xxx    # 限制返回数量
 DELETE /api/ai/history/<record_id>  # 删除特定AI记录
+
+
+

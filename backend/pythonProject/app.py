@@ -4,6 +4,10 @@ from models import db, Knowledge, AICodeGeneration
 from dotenv import load_dotenv
 import os
 
+from sqlalchemy import text
+
+
+
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -27,7 +31,7 @@ def ping():
     return jsonify({
         "status": "alive",
         "service": "Knowledge Base API",
-        "version": "1.0"
+        "version": "0.10"
     })
 
 
@@ -83,8 +87,7 @@ def add_knowledge():
         knowledge = Knowledge(
             topic=data['topic'],
             explanation=data['explanation'],
-            examples=data.get('examples', ''),
-            difficulty=data.get('difficulty', 'beginner')
+            example=data.get('example', {})
         )
         db.session.add(knowledge)
         db.session.commit()
@@ -106,10 +109,8 @@ def update_knowledge():
     try:
         if 'explanation' in data:
             knowledge.explanation = data['explanation']
-        if 'examples' in data:
-            knowledge.examples = data['examples']
-        if 'difficulty' in data:
-            knowledge.difficulty = data['difficulty']
+        if 'example' in data:
+            knowledge.example = data['example']
 
         db.session.commit()
         return jsonify({"status": "success", "data": knowledge.to_dict()})
@@ -363,7 +364,25 @@ def health_check():
     })
 
 
+# 只使用一次：数据库添加列
+def upgrade_knowledge_table():
+    try:
+        # 检查列是否已存在
+        with db.engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='knowledge' and column_name='example'
+            """))
+            if not result.fetchone():
+                conn.execute(text("ALTER TABLE knowledge ADD COLUMN example JSON"))
+                conn.commit()
+    except Exception as e:
+        print(f"添加列失败: {e}")
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # 创建表
+        upgrade_knowledge_table()
     app.run(host='0.0.0.0', port=5000, debug=True)
