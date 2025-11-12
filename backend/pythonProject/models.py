@@ -18,7 +18,7 @@ class Knowledge(db.Model):
             "id": self.id,
             "topic": self.topic,
             "explanation": self.explanation,
-            "example": self.example or {},
+            "example": self.example or [],
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -26,12 +26,18 @@ class Knowledge(db.Model):
     def add_example(self, language, code):
         """添加或更新特定语言的示例代码"""
         if self.example is None:
-            self.example = {}
-        self.example[language] = code
+            self.example = []
+        for code_pair in self.example:
+            if code_pair['language'] == language:
+                code_pair['code'] = code
 
     def get_example(self, language):
         """获取特定语言的示例代码"""
-        return self.example.get(language) if self.example else None
+        if self.example is not None:
+            for code_pair in self.example:
+                if code_pair['language'] == language:
+                    return code_pair
+        return None
 
 
 class AICodeGeneration(db.Model):

@@ -6,10 +6,8 @@ import os
 
 from sqlalchemy import text
 
-
-
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "https://algutor.xyz"}})
 
 # 在文件开头加载环境变量
 load_dotenv()
@@ -87,7 +85,7 @@ def add_knowledge():
         knowledge = Knowledge(
             topic=data['topic'],
             explanation=data['explanation'],
-            example=data.get('example', {})
+            example=data.get('example', [])
         )
         db.session.add(knowledge)
         db.session.commit()

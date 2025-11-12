@@ -10,11 +10,16 @@ GET    /api/knowledge?topic=xxx     # 获取特定知识点
 POST   /api/knowledge               # 添加知识点
     topic: ...
     explanation: ...
-    example: {
-        "languageA(python, c, cpp, java, javascript)": "...",
-        "languageB": "...",
-        ...
-    }
+    example: [
+        {
+            "language": "choose(python, c, cpp, java, javascript)"
+            "code": "..."
+        },
+        {
+            "language": "choose(python, c, cpp, java, javascript)"
+            "code": "..."
+        }
+    ]
 PUT    /api/knowledge?topic=xxx     # 更新知识点
     explanation: ...
     example: see json in POST
