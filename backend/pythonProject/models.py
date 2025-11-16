@@ -1,7 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 import secrets
+import random
 
 db = SQLAlchemy()
 
@@ -15,6 +16,12 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
     api_key = db.Column(db.String(100), unique=True, nullable=True)
+    # 邮箱验证相关字段
+    email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    verification_token = db.Column(db.String(100), unique=True, nullable=True)
+    verification_token_expiry = db.Column(db.DateTime, nullable=True)
+    # 管理员权限标识
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
     
     def set_password(self, password):
         # 简单的密码哈希，实际项目中应使用更安全的方法
@@ -27,14 +34,79 @@ class User(db.Model):
         self.api_key = secrets.token_urlsafe(32)
         return self.api_key
     
+    def generate_verification_token(self, expiry_hours=24):
+        """生成邮箱验证令牌"""
+        self.verification_token = secrets.token_urlsafe(32)
+        self.verification_token_expiry = datetime.now() + timedelta(hours=expiry_hours)
+        return self.verification_token
+    
+    def verify_token(self, token):
+        """验证令牌是否有效"""
+        return (self.verification_token == token and 
+                self.verification_token_expiry and 
+                self.verification_token_expiry > datetime.now())
+    
     def to_dict(self):
         return {
             "id": self.id,
             "username": self.username,
             "email": self.email,
+            "email_verified": self.email_verified,
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "updated_at": self.updated_at.strftime("%Y-%m-%d %H:%M:%S")
         }
+
+
+class EmailVerification(db.Model):
+    """邮箱验证码模型"""
+    __tablename__ = 'email_verifications'
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), nullable=False)
+    verification_code = db.Column(db.String(10), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
+    expires_at = db.Column(db.DateTime, nullable=False)
+    is_used = db.Column(db.Boolean, default=False, nullable=False)
+    attempt_count = db.Column(db.Integer, default=0, nullable=False)
+    
+    @classmethod
+    def generate_code(cls, length=6):
+        """生成指定长度的数字验证码"""
+        return ''.join([str(random.randint(0, 9)) for _ in range(length)])
+    
+    @classmethod
+    def create_verification(cls, email, expiry_minutes=30):
+        """创建并返回新的邮箱验证码记录"""
+        # 先生成验证码
+        code = cls.generate_code()
+        
+        # 设置过期时间
+        expires_at = datetime.now() + timedelta(minutes=expiry_minutes)
+        
+        # 创建新的验证记录
+        verification = cls(
+            email=email,
+            verification_code=code,
+            expires_at=expires_at
+        )
+        
+        db.session.add(verification)
+        db.session.commit()
+        
+        return verification
+    
+    def is_valid(self):
+        """检查验证码是否有效"""
+        return not self.is_used and self.expires_at > datetime.now()
+    
+    def mark_as_used(self):
+        """标记验证码为已使用"""
+        self.is_used = True
+        db.session.commit()
+    
+    def increment_attempt(self):
+        """增加尝试次数"""
+        self.attempt_count += 1
+        db.session.commit()
 
 
 class Knowledge(db.Model):

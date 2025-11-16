@@ -1,5 +1,5 @@
 from app import app, db
-from models import User, Knowledge, UserKnowledge, UserSession
+from models import User, Knowledge, UserKnowledge, UserSession, EmailVerification
 import datetime
 
 def init_database():
@@ -44,7 +44,9 @@ def init_database():
         # 创建一个示例管理员用户
         admin_user = User(
             username='admin',
-            email='admin@example.com'
+            email='admin@example.com',
+            is_admin=True,
+            email_verified=True
         )
         admin_user.set_password('admin123')
         admin_user.generate_api_key()

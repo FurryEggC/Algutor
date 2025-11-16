@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request, g
 from flask_cors import CORS
-from models import db, Knowledge, AICodeGeneration, User, UserKnowledge
+from flask_mail import Mail, Message
+from models import db, Knowledge, AICodeGeneration, User, UserKnowledge, EmailVerification
 from dotenv import load_dotenv
 import os
 import re
@@ -21,7 +22,10 @@ app.config['JWT_HEADER_NAME'] = 'Authorization'
 app.config['JWT_HEADER_TYPE'] = 'Bearer'
 
 # 用户认证装饰器
+# 用户认证装饰器
+from functools import wraps
 def auth_required(f):
+    @wraps(f)
     def decorator(*args, **kwargs):
         api_key = request.headers.get('X-API-Key')
         if not api_key:
@@ -33,8 +37,20 @@ def auth_required(f):
         
         g.current_user = user
         return f(*args, **kwargs)
-    
-    decorator.__name__ = f.__name__
+    return decorator
+
+def admin_required(f):
+    """管理员权限装饰器"""
+    @wraps(f)
+    @auth_required  # 首先需要认证用户
+    def decorator(*args, **kwargs):
+        user = g.current_user
+        
+        # 检查用户是否是管理员
+        if not user.is_admin:
+            return jsonify({"status": "error", "message": "需要管理员权限"}), 403
+        
+        return f(*args, **kwargs)
     return decorator
 
 # 可选的用户认证装饰器
@@ -62,6 +78,18 @@ if not database_url:
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Flask-Mail配置
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'your_email@gmail.com')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'your_app_password')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'your_email@gmail.com')
+
+# 初始化Mail
+mail = Mail(app)
+
 # 初始化数据库
 db.init_app(app)
 
@@ -75,9 +103,87 @@ def ping():
     })
 
 
+@app.route('/api/auth/send_verification_code', methods=['POST'])
+def send_verification_code():
+    """发送邮箱验证码接口"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'email' not in data:
+            return jsonify({"status": "error", "message": "邮箱为必填项"}), 400
+        
+        email = data.get('email')
+        
+        # 验证邮箱格式
+        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            return jsonify({"status": "error", "message": "邮箱格式不正确"}), 400
+        
+        # 检查该邮箱是否已被验证注册
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user and existing_user.email_verified:
+            return jsonify({"status": "error", "message": "该邮箱已被注册"}), 409
+        
+        # 检查是否在短时间内重复发送（防止恶意请求）
+        recent_verification = EmailVerification.query.filter_by(
+            email=email,
+            is_used=False
+        ).order_by(EmailVerification.created_at.desc()).first()
+        
+        if recent_verification:
+            # 计算距离上次发送的时间
+            from datetime import datetime, timedelta
+            time_diff = datetime.now() - recent_verification.created_at
+            if time_diff < timedelta(minutes=1):  # 1分钟内不允许重复发送
+                remaining_time = 60 - time_diff.seconds
+                return jsonify({
+                    "status": "error", 
+                    "message": f"请稍后再试，{remaining_time}秒后可重新发送"
+                }), 429
+        
+        # 创建新的验证码记录
+        verification = EmailVerification.create_verification(email)
+        
+        try:
+            # 在开发环境下，我们只打印验证码，不实际发送邮件
+            print(f"【开发环境】验证码 {verification.verification_code} 应发送至 {email}，有效期30分钟")
+            
+            # 真实邮件发送代码（在生产环境中使用）
+            # msg = Message('Algutor注册验证码', recipients=[email])
+            # msg.body = f"""您好！
+            # 
+            # 感谢您注册Algutor。您的验证码是：
+            # {verification.verification_code}
+            # 
+            # 此验证码有效期为30分钟，请在注册时输入。
+            # 
+            # 如果您没有进行此操作，请忽略此邮件。
+            # 
+            # --
+            # Algutor团队"""
+            # mail.send(msg)
+            
+        except Exception as mail_error:
+            # 发送失败时记录但不影响流程
+            print(f"邮件发送失败: {str(mail_error)}")
+            # 在实际生产环境中，可能需要添加重试机制或发送失败通知
+        
+        return jsonify({
+            "status": "success", 
+            "message": "验证码已发送，请注意查收",
+            "data": {
+                "email": email,
+                "expires_in": 30  # 验证码有效期（分钟）
+            }
+        })
+        
+    except Exception as e:
+        print(f"发送验证码出错: {str(e)}")
+        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
+
+
 @app.route('/api/auth/register', methods=['POST'])
 def register():
-    """用户注册接口"""
+    """用户注册接口（需要邮箱验证码）"""
     try:
         data = request.get_json()
         
@@ -88,9 +194,10 @@ def register():
         username = data.get('username')
         email = data.get('email')
         password = data.get('password')
+        verification_code = data.get('verification_code')
         
-        if not all([username, email, password]):
-            return jsonify({"status": "error", "message": "用户名、邮箱和密码为必填项"}), 400
+        if not all([username, email, password, verification_code]):
+            return jsonify({"status": "error", "message": "用户名、邮箱、密码和验证码为必填项"}), 400
         
         # 验证用户名格式
         if not re.match(r'^[a-zA-Z0-9_]{3,20}$', username):
@@ -104,17 +211,46 @@ def register():
         if len(password) < 6:
             return jsonify({"status": "error", "message": "密码长度至少为6位"}), 400
         
-        # 检查用户名和邮箱是否已存在
+        # 验证验证码
+        verification = EmailVerification.query.filter_by(
+            email=email,
+            verification_code=verification_code,
+            is_used=False
+        ).order_by(EmailVerification.created_at.desc()).first()
+        
+        if not verification:
+            return jsonify({"status": "error", "message": "验证码无效"}), 400
+        
+        if not verification.is_valid():
+            return jsonify({"status": "error", "message": "验证码已过期"}), 400
+        
+        if verification.attempt_count >= 5:  # 限制尝试次数
+            return jsonify({"status": "error", "message": "验证码尝试次数过多，请重新获取"}), 400
+        
+        # 检查用户名是否已存在
         if User.query.filter_by(username=username).first():
             return jsonify({"status": "error", "message": "用户名已存在"}), 409
         
-        if User.query.filter_by(email=email).first():
-            return jsonify({"status": "error", "message": "邮箱已被注册"}), 409
+        # 检查邮箱是否已被验证注册
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user and existing_user.email_verified:
+            return jsonify({"status": "error", "message": "该邮箱已被注册"}), 409
         
-        # 创建新用户
-        user = User(username=username, email=email)
-        user.set_password(password)
+        # 创建新用户或更新现有未验证用户
+        if existing_user:
+            user = existing_user
+            user.username = username
+            user.set_password(password)
+        else:
+            user = User(username=username, email=email)
+            user.set_password(password)
+        
+        # 标记邮箱为已验证
+        user.email_verified = True
         user.generate_api_key()
+        
+        # 标记验证码为已使用
+        verification.mark_as_used()
         
         db.session.add(user)
         db.session.commit()
@@ -653,26 +789,104 @@ def sync_from_public_knowledge():
 
 
 # 保留旧的接口但添加权限控制和状态管理
-@app.route('/api/knowledge', methods=['GET', 'POST', 'PUT', 'DELETE'])
-def handle_knowledge():
-    """统一的知识点CRUD接口（兼容旧版本）"""
+@app.route('/api/knowledge', methods=['GET'])
+def handle_knowledge_get():
+    """获取知识点接口（公开访问）"""
     try:
-        if request.method == 'GET':
-            # 获取公共知识库
-            all_knowledge = Knowledge.query.filter_by(is_public=True).all()
-            return jsonify({
-                "status": "success",
-                "data": [k.to_dict() for k in all_knowledge]
-            })
-        elif request.method == 'POST':
-            # 添加知识点需要管理员权限（这里简化处理）
-            return jsonify({"status": "error", "message": "此接口已更新，请使用新的接口"}), 403
-        elif request.method == 'PUT':
-            return jsonify({"status": "error", "message": "此接口已更新，请使用新的接口"}), 403
-        elif request.method == 'DELETE':
-            return jsonify({"status": "error", "message": "此接口已更新，请使用新的接口"}), 403
+        # 获取公共知识库
+        all_knowledge = Knowledge.query.filter_by(is_public=True).all()
+        return jsonify({
+            "status": "success",
+            "data": [k.to_dict() for k in all_knowledge]
+        })
     except Exception as e:
-        print(f"处理知识点时出错: {str(e)}")
+        print(f"获取知识点时出错: {str(e)}")
+        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
+
+@app.route('/api/knowledge', methods=['POST', 'PUT', 'DELETE'])
+@admin_required
+def handle_knowledge_admin():
+    """知识点管理接口（需要管理员权限）"""
+    try:
+        user = g.current_user
+        
+        if request.method == 'POST':
+            # 添加公共知识点
+            data = request.get_json()
+            if not data or "topic" not in data or "explanation" not in data:
+                return jsonify({"status": "error", "message": "必须提供topic和explanation字段"}), 400
+            
+            # 检查是否已存在相同主题的公共知识点
+            existing = Knowledge.query.filter_by(topic=data['topic'], is_public=True).first()
+            if existing:
+                return jsonify({"status": "error", "message": "已存在相同主题的公共知识点"}), 409
+            
+            # 创建新的公共知识点
+            knowledge = Knowledge(
+                topic=data['topic'],
+                explanation=data['explanation'],
+                example=data.get('example', []),
+                is_public=True,
+                created_by=user.id
+            )
+            db.session.add(knowledge)
+            db.session.commit()
+            
+            return jsonify({"status": "success", "data": knowledge.to_dict()}), 201
+        
+        elif request.method == 'PUT':
+            # 更新公共知识点
+            knowledge_id = request.args.get("id", type=int)
+            if not knowledge_id:
+                return jsonify({"status": "error", "message": "必须提供知识点ID"}), 400
+            
+            knowledge = Knowledge.query.filter_by(id=knowledge_id, is_public=True).first()
+            if not knowledge:
+                return jsonify({"status": "error", "message": "公共知识点不存在"}), 404
+            
+            data = request.get_json()
+            if data:
+                if "topic" in data:
+                    # 检查新主题是否与其他公共知识点冲突
+                    existing = Knowledge.query.filter_by(
+                        topic=data['topic'], 
+                        is_public=True,
+                        id=knowledge_id
+                    ).first()
+                    if existing and existing.id != knowledge_id:
+                        return jsonify({"status": "error", "message": "已存在相同主题的公共知识点"}), 409
+                    knowledge.topic = data['topic']
+                
+                if "explanation" in data:
+                    knowledge.explanation = data['explanation']
+                    
+                if "example" in data:
+                    knowledge.example = data['example']
+                
+                knowledge.updated_at = datetime.now()
+                db.session.commit()
+            
+            return jsonify({"status": "success", "data": knowledge.to_dict()})
+        
+        elif request.method == 'DELETE':
+            # 删除公共知识点
+            knowledge_id = request.args.get("id", type=int)
+            if not knowledge_id:
+                return jsonify({"status": "error", "message": "必须提供知识点ID"}), 400
+            
+            knowledge = Knowledge.query.filter_by(id=knowledge_id, is_public=True).first()
+            if not knowledge:
+                return jsonify({"status": "error", "message": "公共知识点不存在"}), 404
+            
+            try:
+                db.session.delete(knowledge)
+                db.session.commit()
+                return jsonify({"status": "success", "message": "知识点删除成功"})
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({"status": "error", "message": "删除失败，可能有其他数据引用此知识点"}), 500
+    except Exception as e:
+        print(f"处理知识点管理时出错: {str(e)}")
         return jsonify({"status": "error", "message": "服务器内部错误"}), 500
 
 
