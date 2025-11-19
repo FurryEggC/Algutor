@@ -9,8 +9,7 @@ import re
 from sqlalchemy import text
 
 app = Flask(__name__)
-# 允许跨域请求，开发环境允许所有来源
-CORS(app, resources={r"/api/*": {"origins": ["https://algutor.xyz", "http://localhost:3000", "http://127.0.0.1:3000"], "supports_credentials": True}})
+CORS(app, resources={r"/api/*": {"origins": "https://algutor.xyz"}})
 
 # JWT 配置
 import datetime
