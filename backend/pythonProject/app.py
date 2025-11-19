@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from models import db, Knowledge, AICodeGeneration
+from models import db, Knowledge
 from dotenv import load_dotenv
 import os
 
@@ -31,6 +31,14 @@ def ping():
         "service": "Knowledge Base API",
         "version": "0.10"
     })
+
+@app.route('/api/password', methods=['POST'])
+def password():
+    data = request.get_json()
+    password = os.getenv('OPERATOR_PASSWORD')
+    if data.get('password') != password:
+        return jsonify({"status": "wrong password"})
+    return jsonify({"status": "success"})
 
 
 @app.route('/api/analyse', methods=['POST'])
@@ -136,7 +144,7 @@ def delete_knowledge():
 
 @app.route('/api/ai/explain', methods=['POST'])
 def ai_explain_code():
-    """AI代码解释（带数据库保存）"""
+    """AI代码解释功能 - 单次会话模式"""
     try:
         data = request.get_json()
         code = data.get('code', '')
@@ -145,40 +153,34 @@ def ai_explain_code():
         if not code:
             return jsonify({"error": "代码不能为空"}), 400
 
-        prompt = f"请用中文解释以下{language}代码的功能和工作原理：\n\n{code}"
+        # 构建提示信息
+        prompt = f"请详细解释以下{language}代码的功能和实现原理：\n\n代码：{code}\n\n请提供清晰、结构化的解释，包括：\n1. 代码的整体功能\n2. 关键部分的详细说明\n3. 使用的重要概念或算法\n4. 可能的优化建议（如果适用）"
 
         try:
             # 使用微型模型生成解释
             explanation = "explanation..."
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=prompt,
-                generated_content=explanation,
-                language=language,
-                function_type="explain"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
-
             return jsonify({
                 "status": "success",
-                "explanation": explanation,
-                "record_id": ai_record.id
+                "explanation": explanation
             })
         except Exception as e:
-            db.session.rollback()
-            print(f"AI解释生成失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
-
+            print(f"AI代码解释失败: {str(e)}")
+            # 使用备用解释
+            fallback_explanation = f"# AI服务暂时不可用，请稍后重试\n\n代码：{code}\n\n请手动分析以上代码。"
+            return jsonify({
+                "status": "partial",
+                "explanation": fallback_explanation,
+                "error": f"AI服务暂时不可用: {str(e)}"
+            }), 206
     except Exception as e:
-        print(f"AI解释接口错误: {str(e)}")
+        print(f"AI代码解释接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
 
 
 @app.route('/api/ai/generate', methods=['POST'])
 def ai_generate_code():
-    """AI代码生成（带数据库保存）"""
+    """AI代码生成功能 - 单次会话模式"""
     try:
         data = request.get_json()
         requirement = data.get('requirement', '')
@@ -193,76 +195,63 @@ def ai_generate_code():
             # 使用微型模型生成代码
             code = "code..."
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=requirement,
-                generated_content=code,
-                language=language,
-                function_type="generate"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
-
             return jsonify({
                 "status": "success",
-                "code": code,
-                "record_id": ai_record.id
+                "generated_code": code
             })
         except Exception as e:
-            db.session.rollback()
             print(f"AI代码生成失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
-
+            # 使用备用代码
+            fallback_code = f"# AI服务暂时不可用，请稍后重试\nprint('服务暂时不可用')"
+            return jsonify({
+                "status": "partial",
+                "generated_code": fallback_code,
+                "error": f"AI服务暂时不可用: {str(e)}"
+            }), 206
     except Exception as e:
-        print(f"AI生成接口错误: {str(e)}")
+        print(f"AI代码生成接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
 
 
 @app.route('/api/ai/solve', methods=['POST'])
 def ai_solve_problem():
-    """AI算法题目求解（带数据库保存）"""
+    """AI问题求解功能 - 单次会话模式"""
     try:
         data = request.get_json()
         problem = data.get('problem', '')
         language = data.get('language', 'python')
 
         if not problem:
-            return jsonify({"error": "题目描述不能为空"}), 400
+            return jsonify({"error": "问题描述不能为空"}), 400
 
-        prompt = f"请解决以下算法题目，使用{language}编写代码，要求有详细注释和解题思路：\n\n题目：{problem}"
+        # 构建提示信息
+        prompt = f"请解决以下编程问题，并用{language}语言实现解决方案：\n\n问题描述：{problem}\n\n要求：\n1. 分析问题并提供清晰的解决方案\n2. 写出完整、可运行的代码\n3. 添加必要的注释\n4. 分析时间和空间复杂度\n\n请提供详细的解释和代码实现。"
 
         try:
             # 使用微型模型生成解决方案
             solution = "solution..."
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=problem,
-                generated_content=solution,
-                language=language,
-                function_type="solve"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
-
             return jsonify({
                 "status": "success",
-                "solution": solution,
-                "record_id": ai_record.id
+                "solution": solution
             })
         except Exception as e:
-            db.session.rollback()
-            print(f"AI解题失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
-
+            print(f"AI问题求解失败: {str(e)}")
+            # 使用备用解决方案
+            fallback_solution = f"# AI服务暂时不可用，请稍后重试\n\n问题：{problem}\n\n请稍后重试。"
+            return jsonify({
+                "status": "partial",
+                "solution": fallback_solution,
+                "error": f"AI服务暂时不可用: {str(e)}"
+            }), 206
     except Exception as e:
-        print(f"AI解题接口错误: {str(e)}")
+        print(f"AI问题求解接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
 
 
 @app.route('/api/ai/debug', methods=['POST'])
 def ai_debug_code():
-    """AI代码调试（带数据库保存）"""
+    """AI代码调试功能 - 单次会话模式"""
     try:
         data = request.get_json()
         code = data.get('code', '')
@@ -272,76 +261,32 @@ def ai_debug_code():
         if not code:
             return jsonify({"error": "代码不能为空"}), 400
 
-        prompt = f"请帮助调试以下{language}代码：\n\n代码：{code}\n\n错误信息：{error}\n\n请分析错误原因并提供修复方案："
+        prompt = f"请调试以下{language}代码并修复错误：\n\n代码：{code}\n\n错误信息：{error}\n\n请提供错误分析和修复后的完整代码。" if error else f"请分析以下{language}代码并找出潜在问题：\n\n代码：{code}\n\n请提供问题分析和优化后的完整代码。"
 
         try:
             # 使用微型模型生成调试信息
             debug_info = "debug_info..."
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=prompt,
-                generated_content=debug_info,
-                language=language,
-                function_type="debug"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
-
             return jsonify({
                 "status": "success",
-                "debug_info": debug_info,
-                "record_id": ai_record.id
+                "debugged_code": debug_info
             })
         except Exception as e:
-            db.session.rollback()
-            print(f"AI调试失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
+            print(f"AI代码调试失败: {str(e)}")
+            # 使用备用调试代码
+            fallback_code = f"# AI服务暂时不可用，请稍后重试\n{code}\n# 请手动检查代码中的错误"
+            return jsonify({
+                "status": "partial",
+                "debugged_code": fallback_code,
+                "error": f"AI服务暂时不可用: {str(e)}"
+            }), 206
 
     except Exception as e:
-        print(f"AI调试接口错误: {str(e)}")
+        print(f"AI代码调试接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
 
 
-@app.route('/api/ai/history', methods=['GET'])
-def get_ai_history():
-    """获取AI生成历史"""
-    try:
-        function_type = request.args.get('type', '')
-        limit = request.args.get('limit', 10, type=int)
 
-        query = AICodeGeneration.query
-
-        if function_type:
-            query = query.filter_by(function_type=function_type)
-
-        records = query.order_by(AICodeGeneration.created_at.desc()).limit(limit).all()
-
-        return jsonify({
-            "status": "success",
-            "data": [record.to_dict() for record in records]
-        })
-    except Exception as e:
-        print(f"获取AI历史失败: {str(e)}")
-        return jsonify({"error": "服务器内部错误"}), 500
-
-
-@app.route('/api/ai/history/<int:record_id>', methods=['DELETE'])
-def delete_ai_history(record_id):
-    """删除特定的AI生成记录"""
-    try:
-        record = AICodeGeneration.query.get(record_id)
-
-        if not record:
-            return jsonify({"error": "记录不存在"}), 404
-
-        db.session.delete(record)
-        db.session.commit()
-        return jsonify({"status": "success", "message": "记录删除成功"})
-    except Exception as e:
-        db.session.rollback()
-        print(f"删除AI历史记录失败: {str(e)}")
-        return jsonify({"error": str(e)}), 500
 
 
 # 健康检查端点
@@ -362,11 +307,11 @@ def health_check():
     })
 
 
-# 只使用一次：数据库添加列
+# 数据库表结构维护函数
 def upgrade_knowledge_table():
     try:
-        # 检查列是否已存在
         with db.engine.connect() as conn:
+            # 检查并添加example列（如果不存在）
             result = conn.execute(text("""
                 SELECT column_name 
                 FROM information_schema.columns 
@@ -375,8 +320,20 @@ def upgrade_knowledge_table():
             if not result.fetchone():
                 conn.execute(text("ALTER TABLE knowledge ADD COLUMN example JSON"))
                 conn.commit()
+                print("成功添加example列")
+            
+            # 检查并移除多余的is_public列（如果存在）
+            result = conn.execute(text("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name='knowledge' and column_name='is_public'
+            """))
+            if result.fetchone():
+                conn.execute(text("ALTER TABLE knowledge DROP COLUMN is_public"))
+                conn.commit()
+                print("成功移除多余的is_public列")
     except Exception as e:
-        print(f"添加列失败: {e}")
+        print(f"表结构维护失败: {e}")
 
 
 if __name__ == '__main__':
