@@ -125,7 +125,7 @@
 .allpage-content-left {
   display: flex;
   justify-content: space-between;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: #262626;
   /* AntD 灰 10 */
@@ -138,19 +138,28 @@
 .allpage-header-left-item:nth-child(1),
 .allpage-content-left-item:nth-child(1) {
   flex: 1;
-  position: relative;
-  padding-left: 12px;
 }
 
 .allpage-header-left-item:nth-child(2),
 .allpage-header-left-item:nth-child(3),
-
 .allpage-content-left-item:nth-child(2),
 .allpage-content-left-item:nth-child(3) {
   flex: 1.5;
+}
+
+.allpage-header-left-item,
+.allpage-content-left-item {
   position: relative;
   padding-left: 12px;
+  /* 溢出隐藏 */
+  overflow: hidden;
+  /* 文本溢出显示省略号 */
+  text-overflow: ellipsis;
+  /* 强制文字一行显示，不换行 */
+  white-space: nowrap;
 }
+
+
 
 /* 左侧装饰条 */
 .allpage-header-left-item::before {
@@ -185,18 +194,30 @@
   .allpage-content-right-item:nth-child(1) {
     transform: translateX(-24px);
   }
+
+  .allpage-content-left-item {
+    max-width: 73px;
+  }
+}
+
+@media (max-width: 359px) {
+  .allpage-knowledge-minner-hidden {
+    display: none;
+  }
 }
 
 /* 右侧操作区 */
 .allpage-header-right,
-.allpage-content-right {
+.allpage-content-right,
+.topicpage-code-language-right {
   display: flex;
   align-items: center;
   gap: 12px;
   /* 按钮之间间距 */
 }
 
-.allpage-content-right {
+.allpage-content-right,
+.topicpage-code-language-right {
   display: flex;
   justify-content: space-between;
   font-size: 16px;
@@ -207,23 +228,27 @@
   width: 18%;
 }
 
-.allpage-content-right-item:nth-child(1) {
+.allpage-content-right-item:nth-child(1),
+.topicpage-code-language-right-item:nth-child(1) {
   color: #262626;
 }
 
-.allpage-content-right-item:nth-child(2) {
+.allpage-content-right-item:nth-child(2),
+.topicpage-code-language-right-item:nth-child(2) {
   color: #ff6363;
 }
 
 .allpage-content-left-item:nth-child(1):hover,
-.allpage-content-right-item:hover {
+.allpage-content-right-item:hover,
+.topicpage-code-language-right-item:hover {
   transition: all 0.3s;
   transform: translateY(-2px);
   cursor: pointer;
   color: rgb(126, 126, 126);
 }
 
-.allpage-content-right-item:nth-child(2):hover {
+.allpage-content-right-item:nth-child(2):hover,
+.topicpage-code-language-right-item:nth-child(2):hover {
   color: #ff9c9d;
 }
 
@@ -233,7 +258,8 @@
 }
 
 /* ---- 暂无数据空态 ---- */
-.allpage-no-knowledge {
+.allpage-no-knowledge,
+.topicpage-no-code {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -250,7 +276,8 @@
 }
 
 /* 大图标 */
-.allpage-no-knowledge .anticon {
+.allpage-no-knowledge .anticon,
+.topicpage-no-code .anticon {
   /* 圆形尺寸 */
   width: 120px;
   height: 120px;
@@ -272,7 +299,8 @@
 }
 
 /* 主文案 */
-.allpage-no-knowledge .empty-title {
+.allpage-no-knowledge .empty-title,
+.topicpage-no-code .empty-title {
   font-size: 18px;
   font-weight: 500;
   color: #595959;
@@ -280,14 +308,15 @@
 }
 
 /* 副文案 */
-.allpage-no-knowledge .empty-desc {
+.allpage-no-knowledge .empty-desc,
+.topicpage-no-code .empty-desc {
   font-size: 14px;
   color: #8c8c8c;
   margin: 0;
 }
 
 
-.knowledge-explanation {
+.topicpage-explanation {
   font-size: 16px;
   line-height: 1.8;
   color: #4e5969;
@@ -296,9 +325,80 @@
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
+}
+
+.topicpage-explanation {
   text-indent: 2em;
 }
 
-.knowledge-explanation:hover {
+.topicpage-explanation:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ---- 弹窗内代码区域 ---- */
+.allpage-addKnowledge-code {
+  margin-top: 8px;
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* 行间留白 */
+}
+
+/* 区域标题 */
+.allpage-addKnowledge-code h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #262626;
+  position: relative;
+  padding-left: 12px;
+  /* 给装饰条留空 */
+}
+
+.topicpage-code-header,
+.topcipage-code-language {
+  display: flex;
+  justify-content: space-between;
+  /* 左右两端 */
+  align-items: center;
+  /* 垂直居中 */
+}
+
+.topcipage-code-language {
+  padding: 16px 24px;
+  /* 与 AntD Card 背景一致 */
+  gap: 16px;
+  /* 响应式间距 */
+}
+
+.topicpage-code-language-left {
+  margin: 0;
+  padding: 0 24px;
+  /* 左右留空，视觉对齐 AntD Header */
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+  position: relative;
+  font-size: 18px;
+  font-weight: 500;
+  color: #262626;
+  /* AntD 灰 10 */
+  line-height: 1;
+}
+
+/* 左侧 3 px 品牌色高亮条 */
+.topicpage-code-language-left::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: #1890ff;
+  /* AntD 主色 */
+  border-radius: 2px;
 }
