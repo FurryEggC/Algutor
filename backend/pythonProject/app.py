@@ -3,6 +3,7 @@ from flask_cors import CORS
 from models import db, Knowledge
 from dotenv import load_dotenv
 import os
+from openai import OpenAI
 
 from sqlalchemy import text
 
@@ -11,6 +12,11 @@ CORS(app, resources={r"/api/*": {"origins": "https://algutor.xyz"}})
 
 # 在文件开头加载环境变量
 load_dotenv()
+
+# 加载 client
+client = OpenAI(
+    api_key=os.environ.get('API_KEY'),
+    base_url="https://api.deepseek.com")
 
 # 配置
 # 从环境变量获取数据库URL，如果没有设置则报错
@@ -160,8 +166,16 @@ def ai_explain_code():
         prompt = f"请详细解释以下{language}代码的功能和实现原理：\n\n代码：{code}\n\n请提供清晰、结构化的解释，包括：\n1. 代码的整体功能\n2. 关键部分的详细说明\n3. 使用的重要概念或算法\n4. 可能的优化建议（如果适用）"
 
         try:
-            # 使用微型模型生成解释
-            explanation = "explanation..."
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一个编程辅助助手"},
+                    {"role": "user", "content": prompt},
+                ],
+                stream=False
+            )
+            # 使用 API 接口生成解释
+            explanation = response.choices[0].message.content
 
             return jsonify({
                 "status": "success",
@@ -195,8 +209,16 @@ def ai_generate_code():
         prompt = f"请根据以下需求编写{language}代码，要求代码规范且有详细注释：\n\n需求：{requirement}"
 
         try:
-            # 使用微型模型生成代码
-            code = "code..."
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一个编程辅助助手"},
+                    {"role": "user", "content": prompt},
+                ],
+                stream=False
+            )
+            # 使用 API 接口生成代码
+            code = response.choices[0].message.content
 
             return jsonify({
                 "status": "success",
@@ -231,8 +253,16 @@ def ai_solve_problem():
         prompt = f"请解决以下编程问题，并用{language}语言实现解决方案：\n\n问题描述：{problem}\n\n要求：\n1. 分析问题并提供清晰的解决方案\n2. 写出完整、可运行的代码\n3. 添加必要的注释\n4. 分析时间和空间复杂度\n\n请提供详细的解释和代码实现。"
 
         try:
-            # 使用微型模型生成解决方案
-            solution = "solution..."
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一个编程辅助助手"},
+                    {"role": "user", "content": prompt},
+                ],
+                stream=False
+            )
+            # 使用 API 接口生成解释
+            solution = response.choices[0].message.content
 
             return jsonify({
                 "status": "success",
@@ -267,8 +297,16 @@ def ai_debug_code():
         prompt = f"请调试以下{language}代码并修复错误：\n\n代码：{code}\n\n错误信息：{error}\n\n请提供错误分析和修复后的完整代码。" if error else f"请分析以下{language}代码并找出潜在问题：\n\n代码：{code}\n\n请提供问题分析和优化后的完整代码。"
 
         try:
-            # 使用微型模型生成调试信息
-            debug_info = "debug_info..."
+            response = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[
+                    {"role": "system", "content": "你是一个编程辅助助手"},
+                    {"role": "user", "content": prompt},
+                ],
+                stream=False
+            )
+            # 使用 API 接口生成解释
+            debug_info = response.choices[0].message.content
 
             return jsonify({
                 "status": "success",
@@ -310,37 +348,9 @@ def health_check():
     })
 
 
-# 数据库表结构维护函数
-def upgrade_knowledge_table():
-    try:
-        with db.engine.connect() as conn:
-            # 检查并添加example列（如果不存在）
-            result = conn.execute(text("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name='knowledge' and column_name='example'
-            """))
-            if not result.fetchone():
-                conn.execute(text("ALTER TABLE knowledge ADD COLUMN example JSON"))
-                conn.commit()
-                print("成功添加example列")
-            
-            # 检查并移除多余的is_public列（如果存在）
-            result = conn.execute(text("""
-                SELECT column_name 
-                FROM information_schema.columns 
-                WHERE table_name='knowledge' and column_name='is_public'
-            """))
-            if result.fetchone():
-                conn.execute(text("ALTER TABLE knowledge DROP COLUMN is_public"))
-                conn.commit()
-                print("成功移除多余的is_public列")
-    except Exception as e:
-        print(f"表结构维护失败: {e}")
-
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # 创建表
-        upgrade_knowledge_table()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+
+
