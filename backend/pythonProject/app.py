@@ -1,8 +1,15 @@
+import subprocess
+import sys
+import time
+import tempfile
+import os
+import uuid
+import shutil
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from models import db, Knowledge
 from dotenv import load_dotenv
-import os
 from openai import OpenAI
 
 from sqlalchemy import text
@@ -321,10 +328,341 @@ def ai_debug_code():
                 "debugged_code": fallback_code,
                 "error": f"AI服务暂时不可用: {str(e)}"
             }), 206
-
     except Exception as e:
         print(f"AI代码调试接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
+
+def execute_python(code: str, args: list, timeout: int):
+    """执行Python代码并返回结果"""
+    start_time = time.time()
+    temp_file = None
+    temp_file_path = None
+    
+    try:
+        # 创建临时文件存储Python代码
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+            temp_file.write(code)
+            temp_file_path = temp_file.name
+        
+        # 构建命令列表
+        cmd = [sys.executable, temp_file_path] + args
+        
+        # 执行代码
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        # 计算执行时间
+        execution_time = round(time.time() - start_time, 3)
+        
+        return {
+            "status": "success",
+            "output": result.stdout,
+            "error": result.stderr,
+            "execution_time": execution_time
+        }
+        
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }, 500
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"代码执行失败: {str(e)}",
+            "error": str(e)
+        }, 500
+    finally:
+        # 清理临时文件
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except:
+                pass
+
+def execute_c(code: str, args: list, timeout: int):
+    """执行C代码并返回结果"""
+    start_time = time.time()
+    temp_dir = None
+    
+    try:
+        # 创建临时目录
+        temp_dir = tempfile.mkdtemp()
+        
+        # 生成唯一文件名
+        file_name = f"program_{uuid.uuid4().hex}"
+        source_path = os.path.join(temp_dir, f"{file_name}.c")
+        executable_path = os.path.join(temp_dir, file_name)
+        
+        # 写入C代码
+        with open(source_path, 'w') as f:
+            f.write(code)
+        
+        # 编译C代码
+        compile_cmd = ["gcc", source_path, "-o", executable_path]
+        compile_result = subprocess.run(
+            compile_cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        if compile_result.returncode != 0:
+            # 编译失败
+            return {
+                "status": "error",
+                "message": "代码编译失败",
+                "error": compile_result.stderr
+            }, 500
+        
+        # 执行编译后的程序
+        cmd = [executable_path] + args
+        execute_result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        # 计算执行时间
+        execution_time = round(time.time() - start_time, 3)
+        
+        return {
+            "status": "success",
+            "output": execute_result.stdout,
+            "error": execute_result.stderr,
+            "execution_time": execution_time
+        }
+        
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }, 500
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"代码执行失败: {str(e)}",
+            "error": str(e)
+        }, 500
+    finally:
+        # 清理临时目录
+        if temp_dir:
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
+
+def execute_cpp(code: str, args: list, timeout: int):
+    """执行C++代码并返回结果"""
+    start_time = time.time()
+    temp_dir = None
+    
+    try:
+        # 创建临时目录
+        temp_dir = tempfile.mkdtemp()
+        
+        # 生成唯一文件名
+        file_name = f"program_{uuid.uuid4().hex}"
+        source_path = os.path.join(temp_dir, f"{file_name}.cpp")
+        executable_path = os.path.join(temp_dir, file_name)
+        
+        # 写入C++代码
+        with open(source_path, 'w') as f:
+            f.write(code)
+        
+        # 编译C++代码
+        compile_cmd = ["g++", source_path, "-o", executable_path]
+        compile_result = subprocess.run(
+            compile_cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        if compile_result.returncode != 0:
+            # 编译失败
+            return {
+                "status": "error",
+                "message": "代码编译失败",
+                "error": compile_result.stderr
+            }, 500
+        
+        # 执行编译后的程序
+        cmd = [executable_path] + args
+        execute_result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        # 计算执行时间
+        execution_time = round(time.time() - start_time, 3)
+        
+        return {
+            "status": "success",
+            "output": execute_result.stdout,
+            "error": execute_result.stderr,
+            "execution_time": execution_time
+        }
+        
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }, 500
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"代码执行失败: {str(e)}",
+            "error": str(e)
+        }, 500
+    finally:
+        # 清理临时目录
+        if temp_dir:
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
+
+def execute_java(code: str, args: list, timeout: int):
+    """执行Java代码并返回结果"""
+    start_time = time.time()
+    temp_dir = None
+    
+    try:
+        # 创建临时目录
+        temp_dir = tempfile.mkdtemp()
+        
+        # 查找public class名称
+        import re
+        class_match = re.search(r'public\s+class\s+(\w+)', code)
+        if not class_match:
+            # 如果没有找到public class，使用默认类名
+            class_name = "Main"
+            # 添加public class包装
+            code = f"public class {class_name} {{\n{code}\n}}"
+        else:
+            class_name = class_match.group(1)
+        
+        # 生成Java文件路径
+        source_path = os.path.join(temp_dir, f"{class_name}.java")
+        
+        # 写入Java代码
+        with open(source_path, 'w') as f:
+            f.write(code)
+        
+        # 编译Java代码
+        compile_cmd = ["javac", source_path]
+        compile_result = subprocess.run(
+            compile_cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        if compile_result.returncode != 0:
+            # 编译失败
+            return {
+                "status": "error",
+                "message": "代码编译失败",
+                "error": compile_result.stderr
+            }, 500
+        
+        # 执行编译后的程序
+        cmd = ["java", "-cp", temp_dir, class_name] + args
+        execute_result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        
+        # 计算执行时间
+        execution_time = round(time.time() - start_time, 3)
+        
+        return {
+            "status": "success",
+            "output": execute_result.stdout,
+            "error": execute_result.stderr,
+            "execution_time": execution_time
+        }
+        
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }, 500
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"代码执行失败: {str(e)}",
+            "error": str(e)
+        }, 500
+    finally:
+        # 清理临时目录
+        if temp_dir:
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
+
+@app.route('/api/execute', methods=['POST'])
+def execute_code():
+    """代码执行"""
+    try:
+        data = request.get_json()
+        code = data.get('code', '')
+        language = data.get('language', 'python').lower()
+        timeout = data.get('timeout', 10)  # 默认超时10秒
+        args = data.get('args', [])  # 获取命令行参数列表
+
+
+        if not language in ['python','c','cpp','c++','java']:
+            return {
+                "status": "error",
+                "error": f"未知语言: {language}, 预期: {['python','c','cpp','c++','java']}"
+            }, 400
+        if not code:
+            return {
+                "status": "error", 
+                "message": "代码不能为空"
+            }, 400
+
+        output = ""
+        error = ""
+        temp_dir = None
+
+        if not isinstance(args, list):
+            return {
+                "status": "error", 
+                "message": "args参数必须是数组格式"
+            }, 400
+
+        if(language == 'python'):
+            return execute_python(code, args, timeout)
+        elif(language == 'c'):
+            return execute_c(code, args, timeout)
+        elif(language == 'cpp' or language == 'c++'):
+            return execute_cpp(code, args, timeout)
+        elif(language == 'java'):
+            return execute_java(code, args, timeout)
+        
+    except Exception as e:
+        print(f"代码执行接口错误: {str(e)}")
+        return {
+            "status": "error", 
+            "message": "服务器内部错误"
+        }, 500
 
 
 
