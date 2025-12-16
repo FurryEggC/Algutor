@@ -315,6 +315,7 @@
 | `language` | string | 否   | 代码语言，默认为 python，不区分大小写 |
 | `timeout`  | number | 否   | 执行超时时间（秒），默认为 10       |
 | `args`     | array  | 否   | 命令行参数列表，默认为空数组        |
+| `input`    | string | 否   | 程序输入数据，将作为标准输入传递给执行的代码 |
 
 **支持的语言**:
 
@@ -323,12 +324,22 @@
 * C++ (cpp)
 * Java
 
+**请求示例（包含输入）**:
+
+```json
+{
+  "code": "name = input('Enter your name: '); print('Hello, ' + name + '!')",
+  "language": "python",
+  "input": "Alice"
+}
+```
+
 **成功响应示例**:
 
 ```json
 {
   "status": "success",
-  "output": "Hello, World!\n",
+  "output": "Enter your name: Hello, Alice!\n",
   "error": "",
   "execution_time": 0.123
 }

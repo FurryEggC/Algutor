@@ -1,18 +1,18 @@
+import os
+import shutil
 import subprocess
 import sys
-import time
 import tempfile
-import os
+import time
 import uuid
-import shutil
+import re
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from models import db, Knowledge
-from dotenv import load_dotenv
 from openai import OpenAI
 
-from sqlalchemy import text
+from models import db, Knowledge
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "https://algutor.xyz"}})
@@ -48,11 +48,11 @@ def ping():
 @app.route('/api/password', methods=['POST'])
 def password():
     data = request.get_json()
-    password = os.getenv('OPERATOR_PASSWORD')
-    if not password:
+    operator_pwd = os.getenv('OPERATOR_PASSWORD')
+    if not operator_pwd:
         return jsonify({"status": "success"})
 
-    if data.get('password') != password:
+    if data.get('password') != operator_pwd:
         return jsonify({"status": "wrong password"})
     return jsonify({"status": "success"})
 
@@ -173,6 +173,7 @@ def ai_explain_code():
         prompt = f"请详细解释以下{language}代码的功能和实现原理：\n\n代码：{code}\n\n请提供清晰、结构化的解释，包括：\n1. 代码的整体功能\n2. 关键部分的详细说明\n3. 使用的重要概念或算法\n4. 可能的优化建议（如果适用）"
 
         try:
+            # noinspection PyTypeChecker
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
@@ -216,6 +217,7 @@ def ai_generate_code():
         prompt = f"请根据以下需求编写{language}代码，要求代码规范且有详细注释：\n\n需求：{requirement}"
 
         try:
+            # noinspection PyTypeChecker
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
@@ -260,6 +262,7 @@ def ai_solve_problem():
         prompt = f"请解决以下编程问题，并用{language}语言实现解决方案：\n\n问题描述：{problem}\n\n要求：\n1. 分析问题并提供清晰的解决方案\n2. 写出完整、可运行的代码\n3. 添加必要的注释\n4. 分析时间和空间复杂度\n\n请提供详细的解释和代码实现。"
 
         try:
+            # noinspection PyTypeChecker
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
@@ -304,6 +307,7 @@ def ai_debug_code():
         prompt = f"请调试以下{language}代码并修复错误：\n\n代码：{code}\n\n错误信息：{error}\n\n请提供错误分析和修复后的完整代码。" if error else f"请分析以下{language}代码并找出潜在问题：\n\n代码：{code}\n\n请提供问题分析和优化后的完整代码。"
 
         try:
+            # noinspection PyTypeChecker
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
@@ -332,7 +336,7 @@ def ai_debug_code():
         print(f"AI代码调试接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
 
-def execute_python(code: str, args: list, timeout: int):
+def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
     """执行Python代码并返回结果"""
     start_time = time.time()
     temp_file = None
@@ -350,6 +354,7 @@ def execute_python(code: str, args: list, timeout: int):
         # 执行代码
         result = subprocess.run(
             cmd,
+            input=input_data,
             capture_output=True,
             text=True,
             timeout=timeout
@@ -357,7 +362,8 @@ def execute_python(code: str, args: list, timeout: int):
         
         # 计算执行时间
         execution_time = round(time.time() - start_time, 3)
-        
+
+
         return {
             "status": "success",
             "output": result.stdout,
@@ -385,7 +391,7 @@ def execute_python(code: str, args: list, timeout: int):
             except:
                 pass
 
-def execute_c(code: str, args: list, timeout: int):
+def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
     """执行C代码并返回结果"""
     start_time = time.time()
     temp_dir = None
@@ -424,6 +430,7 @@ def execute_c(code: str, args: list, timeout: int):
         cmd = [executable_path] + args
         execute_result = subprocess.run(
             cmd,
+            input=input_data,
             capture_output=True,
             text=True,
             timeout=timeout
@@ -459,7 +466,7 @@ def execute_c(code: str, args: list, timeout: int):
             except:
                 pass
 
-def execute_cpp(code: str, args: list, timeout: int):
+def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
     """执行C++代码并返回结果"""
     start_time = time.time()
     temp_dir = None
@@ -498,6 +505,7 @@ def execute_cpp(code: str, args: list, timeout: int):
         cmd = [executable_path] + args
         execute_result = subprocess.run(
             cmd,
+            input=input_data,
             capture_output=True,
             text=True,
             timeout=timeout
@@ -533,7 +541,7 @@ def execute_cpp(code: str, args: list, timeout: int):
             except:
                 pass
 
-def execute_java(code: str, args: list, timeout: int):
+def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
     """执行Java代码并返回结果"""
     start_time = time.time()
     temp_dir = None
@@ -542,8 +550,11 @@ def execute_java(code: str, args: list, timeout: int):
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
         
+        # 检查是否有package声明
+        package_match = re.search(r'^\s*package\s+([\w.]+);', code.strip(), re.MULTILINE)
+        package_name = package_match.group(1) if package_match else None
+        
         # 查找public class名称
-        import re
         class_match = re.search(r'public\s+class\s+(\w+)', code)
         if not class_match:
             # 如果没有找到public class，使用默认类名
@@ -553,22 +564,76 @@ def execute_java(code: str, args: list, timeout: int):
         else:
             class_name = class_match.group(1)
         
-        # 生成Java文件路径
-        source_path = os.path.join(temp_dir, f"{class_name}.java")
+        # 如果没有package声明，添加默认的package声明
+        if not package_name:
+            package_name = "main"
+            code = f"package {package_name};\n\n{code}"
+        
+        # 生成与package结构相对应的目录结构
+        if package_name:
+            package_dir = os.path.join(temp_dir, *package_name.split('.'))
+            os.makedirs(package_dir, exist_ok=True)
+            source_path = os.path.join(package_dir, f"{class_name}.java")
+        else:
+            source_path = os.path.join(temp_dir, f"{class_name}.java")
         
         # 写入Java代码
         with open(source_path, 'w') as f:
             f.write(code)
-        
+
+        # 获取Java编译器和运行时路径
+        javac_path = os.getenv("JAVA_COMPILER_PATH", "javac")  # 默认使用系统PATH中的javac
+        java_path = os.getenv("JAVA_RUNTIME_PATH", "java")    # 默认使用系统PATH中的java
+
+        # 检查Java环境是否存在
+        java_available = False
+        javac_available = False
+
+        # 直接检查配置的路径是否存在
+        if os.path.exists(javac_path):
+            javac_available = True
+        elif javac_path == "javac":
+            # 如果使用默认值，检查是否在系统PATH中
+            try:
+                if os.name == 'nt':  # Windows
+                    result = subprocess.run(['where', javac_path], capture_output=True, text=True)
+                    javac_available = result.returncode == 0
+                else:  # Linux/Mac
+                    result = subprocess.run(['which', javac_path], capture_output=True, text=True)
+                    javac_available = result.returncode == 0
+            except Exception:
+                pass
+
+        if os.path.exists(java_path):
+            java_available = True
+        elif java_path == "java":
+            # 如果使用默认值，检查是否在系统PATH中
+            try:
+                if os.name == 'nt':  # Windows
+                    result = subprocess.run(['where', java_path], capture_output=True, text=True)
+                    java_available = result.returncode == 0
+                else:  # Linux/Mac
+                    result = subprocess.run(['which', java_path], capture_output=True, text=True)
+                    java_available = result.returncode == 0
+            except Exception:
+                pass
+
+        if not javac_available or not java_available:
+            return {
+                "status": "error",
+                "message": "Java环境未找到",
+                "error": "请安装Java开发工具包(JDK)并配置环境变量。需要javac和java命令都可用。"
+            }, 500
+
         # 编译Java代码
-        compile_cmd = ["javac", source_path]
+        compile_cmd = [javac_path, "-encoding", "UTF-8", source_path]
         compile_result = subprocess.run(
             compile_cmd,
             capture_output=True,
             text=True,
             timeout=timeout
         )
-        
+
         if compile_result.returncode != 0:
             # 编译失败
             return {
@@ -577,10 +642,12 @@ def execute_java(code: str, args: list, timeout: int):
                 "error": compile_result.stderr
             }, 500
         
-        # 执行编译后的程序
-        cmd = ["java", "-cp", temp_dir, class_name] + args
+        # 执行编译后的程序 - 使用完整的包名+类名
+        full_class_name = f"{package_name}.{class_name}"
+        cmd = [java_path, "-cp", temp_dir, full_class_name] + args
         execute_result = subprocess.run(
             cmd,
+            input=input_data,
             capture_output=True,
             text=True,
             timeout=timeout
@@ -625,7 +692,7 @@ def execute_code():
         language = data.get('language', 'python').lower()
         timeout = data.get('timeout', 10)  # 默认超时10秒
         args = data.get('args', [])  # 获取命令行参数列表
-
+        input_data = data.get('input', '')  # 获取程序输入
 
         if not language in ['python','c','cpp','c++','java']:
             return {
@@ -648,14 +715,14 @@ def execute_code():
                 "message": "args参数必须是数组格式"
             }, 400
 
-        if(language == 'python'):
-            return execute_python(code, args, timeout)
-        elif(language == 'c'):
-            return execute_c(code, args, timeout)
-        elif(language == 'cpp' or language == 'c++'):
-            return execute_cpp(code, args, timeout)
-        elif(language == 'java'):
-            return execute_java(code, args, timeout)
+        if language == 'python':
+            return execute_python(code, args, timeout, input_data)
+        elif language == 'c':
+            return execute_c(code, args, timeout, input_data)
+        elif language == 'cpp' or language == 'c++':
+            return execute_cpp(code, args, timeout, input_data)
+        elif language == 'java':
+            return execute_java(code, args, timeout, input_data)
         
     except Exception as e:
         print(f"代码执行接口错误: {str(e)}")
