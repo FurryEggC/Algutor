@@ -1,0 +1,180 @@
+.ai-explain {
+  display: flex;
+  justify-content: space-between;
+  align-items: space-between;
+  flex: 1;
+  gap: 24px;
+  width: 100%;
+}
+
+/* ---- 代码解释页：左侧代码区 ---- */
+.ai-explain-code-container {
+  flex: 1;
+  background: #fafafa;
+  /* 比纯白柔和 */
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* 表单行间留白 */
+}
+
+/* 表单标题 */
+.ai-explain-code-container .ant-form-item-label>label {
+  font-weight: 500;
+  overflow: hidden;
+  /* 圆角裁剪 */
+  transition: box-shadow 0.2s;
+}
+
+.ai-explain-code:hover {
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+  /* 悬停微光 */
+}
+
+/* 提交按钮 */
+.ai-explain-code-container .ant-btn-primary {
+  width: 100%;
+  /* 撑满容器 */
+  height: 40px;
+  font-size: 15px;
+}
+
+.ai-explain-explanation-container {
+  flex: 1;
+  background: #fafafa;
+  border-radius: 16px;
+}
+
+.ai-explain-code {
+  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+/* ---- 暂无数据空态 ---- */
+.ai-explain-no-explanation {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  color: #8c8c8c;
+  /* 中性灰 */
+  background: #fafafa;
+  /* 比纯白更柔和 */
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+/* 大图标 */
+.ai-explain-no-explanation .anticon {
+  /* 圆形尺寸 */
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* 关键：flex 居中 */
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+  justify-content: center;
+  /* 水平居中 */
+
+  /* 去掉图标自带行高干扰 */
+  font-size: 80px;
+  color: #d9d9d9;
+  line-height: 1;
+}
+
+/* 主文案 */
+.ai-explain-no-explanation .empty-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #595959;
+  margin: 0;
+}
+
+/* 副文案 */
+.ai-explain-no-explanation .empty-desc {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+/* ---- 有解释：代码高亮阅读区 ---- */
+.ai-explain-explanation {
+  flex: 1;
+  padding: 24px;
+  background: #fafafa;
+  /* 同左侧卡片 */
+  border-radius: 12px;
+  /* box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.04); */
+  overflow: auto;
+  /* 内容多时内部滚动 */
+  font-size: 15px;
+  line-height: 1.8;
+  color: #262626;
+  white-space: pre-wrap;
+  /* 保留换行与空格 */
+  word-break: break-word;
+  max-height: 74vh;
+}
+
+/* 行号效果（可选） */
+.ai-explain-explanation {
+  counter-reset: line;
+}
+
+.ai-explain-explanation .line {
+  display: block;
+  counter-increment: line;
+}
+
+.ai-explain-explanation .line::before {
+  content: counter(line);
+  width: 32px;
+  margin-right: 16px;
+  text-align: right;
+  color: #8c8c8c;
+  user-select: none;
+}
+
+/* 代码块 / 关键词高亮（简单版） */
+.ai-explain-explanation code {
+  background: #f0f0f0;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  color: #d4380d;
+  /* AntD 错误红，用于关键字 */
+}
+
+/* 引用块 */
+.ai-explain-explanation blockquote {
+  margin: 12px 0;
+  padding-left: 12px;
+  border-left: 3px solid #1890ff;
+  color: #595959;
+}
+
+@media(max-width: 680px) {
+  .ai-explain {
+    flex-direction: column;
+  }
+
+  .ai-explain-code-container .ant-btn-primary {
+    transform: translateX(-33%);
+  }
+
+  .ai-explain-explanation {
+    max-height: none;
+  }
+}

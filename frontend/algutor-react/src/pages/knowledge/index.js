@@ -8,9 +8,10 @@ import {
   HistoryOutlined,
   EditOutlined,
   DeleteOutlined,
-  InboxOutlined
+  InboxOutlined,
+  AudioOutlined,
 } from '@ant-design/icons';
-import { Layout, Menu, theme, Button, Form, Modal, Input, Tooltip, Select } from 'antd';
+import { Layout, Menu, theme, Button, Form, Modal, Input, Tooltip, Select, Space } from 'antd';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import './index.css';
 import { useState, useEffect } from 'react';
@@ -21,6 +22,44 @@ const { Header, Content, Footer, Sider } = Layout;
 
 /* ② 两个子页面 ************************************************************/
 function AllPage({ setNav }) {
+  // 管理员身份验证
+  const [adminForm] = Form.useForm();
+  const [isAdmin, setIsAdmin] = useState(() => {
+    // 初始化时从sessionStorage读取isAdmin状态
+    return sessionStorage.getItem('isAdmin') === 'true';
+  });
+  const [adminOpen, setAdminOpen] = useState(false);
+  async function checkPassword(password) {
+    try {
+      const res = await axios({
+        url: 'https://algutor.xyz/api/password',
+        method: 'POST',
+        data: {
+          password: password
+        }
+      })
+      if (res.data.status == 'success') {
+        setIsAdmin(true);
+        // 将isAdmin状态保存到sessionStorage
+        sessionStorage.setItem('isAdmin', 'true');
+        alert('身份验证成功。您好，管理员！');
+      }
+      else {
+        alert('密码错误,验证失败');
+      }
+    } catch (error) {
+      navigate('/error');
+    }
+  }
+  const setAdminCreate = values => {
+    console.log('Received values of form: ', values);
+    try {
+      checkPassword(values.password);
+    } catch (error) {
+      alert('密码错误,验证失败');
+    }
+    setAdminOpen(false);
+  };
   // 添加知识点功能变量和函数
   const [addForm] = Form.useForm();
   const [addOpen, setAddOpen] = useState(false);
@@ -161,7 +200,7 @@ function AllPage({ setNav }) {
               shape="round"
               icon={<PlusOutlined />}
               size="default"
-              onClick={() => setAddOpen(true)}
+              onClick={() => isAdmin ? setAddOpen(true) : setAdminOpen(true)}
             >
               {/* 在 ≥992 时显示文字，<992 时自动隐藏 */}
               <span className="allpage-minner-hidden">添加知识点</span>
@@ -188,12 +227,12 @@ function AllPage({ setNav }) {
           </div>
           {/* 右侧内容布局 */}
           <div className="allpage-content-right">
-            <div className="allpage-content-right-item" onClick={() => { handleEdit(item) }}>
+            <div className="allpage-content-right-item" onClick={() => isAdmin ? handleEdit(item) : setAdminOpen(true)}>
               <Tooltip title="编辑" placement="top">
                 <EditOutlined /> <span className="allpage-minner-hidden">编辑</span>
               </Tooltip>
             </div>
-            <div className="allpage-content-right-item" onClick={() => showModal(item)}>
+            <div className="allpage-content-right-item" onClick={() => isAdmin ? showModal(item) : setAdminOpen(true)}>
               <Tooltip title="删除" placement="top">
                 <DeleteOutlined /> <span className="allpage-minner-hidden">删除</span>
               </Tooltip>
@@ -207,6 +246,39 @@ function AllPage({ setNav }) {
           <p className="empty-desc">点击右上角「添加知识点」创建第一条记录</p>
         </div>
       )}
+      {/* 弹窗：验证管理员 */}
+      <Modal
+        title="请输入密码验证管理员身份"
+        open={adminOpen}
+        okText="确认"
+        cancelText="取消"
+        okButtonProps={{ autoFocus: true, htmlType: 'submit' }}
+        onCancel={() => setAdminOpen(false)}
+        destroyOnHidden
+        modalRender={dom => (
+          <Form
+            layout="vertical"
+            form={adminForm}
+            name="form_in_modal"
+            initialValues={{ modifier: 'public' }}
+            clearOnDestroy
+            onFinish={values => setAdminCreate(values)}
+          >
+            {dom}
+          </Form>
+        )}
+      >
+        <Form.Item
+          name="password"
+          label="密码"
+          rules={[{ required: true, message: '请输入密码！' }]}
+        >
+          <Input.Password
+            autoComplete="off"        // 1. 关闭自动填充
+            spellCheck="false"        // 2. 关闭拼写检查 
+          />
+        </Form.Item>
+      </Modal>
       {/* 弹窗：添加知识点 */}
       <Modal
         open={addOpen}
@@ -309,6 +381,45 @@ function AllPage({ setNav }) {
 }
 
 function TopicPage({ topic: propTopic, setNav }) {
+  // 管理员身份验证
+  const [adminForm] = Form.useForm();
+  const [isAdmin, setIsAdmin] = useState(() => {
+    // 初始化时从sessionStorage读取isAdmin状态
+    return sessionStorage.getItem('isAdmin') === 'true';
+  });
+  const [adminOpen, setAdminOpen] = useState(false);
+  async function checkPassword(password) {
+    try {
+      const res = await axios({
+        url: 'https://algutor.xyz/api/password',
+        method: 'POST',
+        data: {
+          password: password
+        }
+      })
+      if (res.data.status == 'success') {
+        setIsAdmin(true);
+        // 将isAdmin状态保存到sessionStorage
+        sessionStorage.setItem('isAdmin', 'true');
+        alert('身份验证成功。您好，管理员！');
+      }
+      else {
+        alert('密码错误,验证失败');
+      }
+    } catch (error) {
+      navigate('/error');
+    }
+  }
+  const setAdminCreate = values => {
+    console.log('Received values of form: ', values);
+    try {
+      checkPassword(values.password);
+    } catch (error) {
+      alert('密码错误,验证失败');
+    }
+    setAdminOpen(false);
+  };
+  // 本地存储topic
   const navigate = useNavigate();
   const saveTopic = (t) => localStorage.setItem('lastTopic', t);
   const loadTopic = () => localStorage.getItem('lastTopic') || '全部';
@@ -477,7 +588,7 @@ function TopicPage({ topic: propTopic, setNav }) {
               shape="round"
               icon={<PlusOutlined />}
               size="default"
-              onClick={() => setAddOpen(true)}
+              onClick={() => isAdmin ? setAddOpen(true) : setAdminOpen(true)}
             >
               {/* 在 ≥992 时显示文字，<992 时自动隐藏 */}
               <span className="allpage-minner-hidden">添加代码</span>
@@ -491,12 +602,12 @@ function TopicPage({ topic: propTopic, setNav }) {
             <div className="topcipage-code-language">
               <div className="topicpage-code-language-left">{item.language}</div>
               <div className="topicpage-code-language-right">
-                <div className="topicpage-code-language-right-item" onClick={() => handleEdit(item)}>
+                <div className="topicpage-code-language-right-item" onClick={() => isAdmin ? handleEdit(item) : setAdminOpen(true)}>
                   <Tooltip title="编辑" placement="top">
                     <EditOutlined /> <span className="allpage-minner-hidden">编辑</span>
                   </Tooltip>
                 </div>
-                <div className="topicpage-code-language-right-item" onClick={() => showModal(item)}>
+                <div className="topicpage-code-language-right-item" onClick={() => isAdmin ? showModal(item) : setAdminOpen(true)}>
                   <Tooltip title="删除" placement="top">
                     <DeleteOutlined /> <span className="allpage-minner-hidden">删除</span>
                   </Tooltip>
@@ -533,6 +644,39 @@ function TopicPage({ topic: propTopic, setNav }) {
           </div>
         )}
       </div>
+      {/* 弹窗：验证管理员 */}
+      <Modal
+        title="请输入密码验证管理员身份"
+        open={adminOpen}
+        okText="确认"
+        cancelText="取消"
+        okButtonProps={{ autoFocus: true, htmlType: 'submit' }}
+        onCancel={() => setAdminOpen(false)}
+        destroyOnHidden
+        modalRender={dom => (
+          <Form
+            layout="vertical"
+            form={adminForm}
+            name="form_in_modal"
+            initialValues={{ modifier: 'public' }}
+            clearOnDestroy
+            onFinish={values => setAdminCreate(values)}
+          >
+            {dom}
+          </Form>
+        )}
+      >
+        <Form.Item
+          name="password"
+          label="密码"
+          rules={[{ required: true, message: '请输入密码！' }]}
+        >
+          <Input.Password
+            autoComplete="off"        // 1. 关闭自动填充
+            spellCheck="false"        // 2. 关闭拼写检查 
+          />
+        </Form.Item>
+      </Modal>
       {/* 弹窗：添加代码 */}
       <Modal
         open={addOpen}
@@ -719,6 +863,24 @@ function Knowledge() {
       <TopicPage topic={nav.find((i) => i.key === selectedKey)?.label} setNav={setNav} key={selectedKey} />
     );
 
+  const { Search } = Input;
+  const suffix = <AudioOutlined style={{ fontSize: 16, color: '#1677ff' }} />;
+  // 搜索功能相关状态
+  const [searchValue, setSearchValue] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [contentItem, setContentItem] = useState([]);
+  async function getKnowledge() {
+    try {
+      const res = await axios({
+        url: 'https://algutor.xyz/api/knowledge',
+        method: 'GET'
+      })
+      setContentItem(res.data.data);
+    } catch (error) {
+      navigate('/error');
+    }
+  }
   return (
     <Layout hasSider>
       <Sider
@@ -746,10 +908,108 @@ function Knowledge() {
           onClick={onMenuClick}
         />
       </Sider>
-
       <Layout style={{ display: 'flex', flexDirection: 'column' }}>
         <Header style={{ padding: 0, background: token.colorBgContainer }} >
-          <h2 className="knowledge-title">{nav.find((i) => i.key === selectedKey)?.label}</h2>
+          <div className="knowledge-header">
+            <h2 className="knowledge-title">{nav.find((i) => i.key === selectedKey)?.label}</h2>
+            <div className="knowledge-search-box">
+              <Search
+                placeholder="请输入关键词搜索..."
+                allowClear
+                className='knowledge-input-search'
+                value={searchValue}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSearchValue(value);
+                  if (value) {
+                    getKnowledge();
+                    // 过滤出包含关键词的topic，限制最多显示10个结果
+                    const filtered = contentItem
+                      .filter(item =>
+                        item.topic.toLowerCase().includes(value.toLowerCase())
+                      )
+                      .slice(0, 10); // 限制最多显示10个结果
+                    setSearchSuggestions(filtered);
+                    setShowSuggestions(true);
+                  } else {
+                    setShowSuggestions(false);
+                  }
+                }}
+                onBlur={() => {
+                  // 延迟隐藏，以便点击建议项
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                onFocus={() => {
+                  if (searchValue && searchSuggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+              />
+              {showSuggestions && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  background: '#fff',
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '4px',
+                  zIndex: 1000,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  marginRight: '24px'
+                }}>
+                  {searchSuggestions.length > 0 ? (
+                    searchSuggestions.map((item, index) => {
+                      // 高亮关键词
+                      const highlightedText = item.topic.replace(
+                        new RegExp(`(${searchValue})`, 'gi'),
+                        '<mark style="background-color: #fffb8c; color: #333;">$1</mark>'
+                      );
+                      return (
+                        <div
+                          key={index}
+                          style={{
+                            paddingLeft: '12px',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            transition: 'all 0.2s ease',
+                            height: '40px',
+                            borderBottom: '1px solid #e8e8e8',
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.background = '#f5f5f5';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.background = '#fff';
+                          }}
+                          onClick={() => {
+                            navigate(`/knowledge?key=${item.id}&topic=${item.topic}`);
+                            setSearchValue('');
+                            setShowSuggestions(false);
+                          }}
+                          dangerouslySetInnerHTML={{ __html: highlightedText }}
+                        />
+                      );
+                    })
+                  ) : (
+                    <div style={{
+                      padding: '8px 12px',
+                      color: '#999',
+                      textAlign: 'center'
+                    }}>
+                      未找到相关知识点
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </Header>
         <Content style={{ flex: 1, margin: '24px 16px 0' }}>
           <div

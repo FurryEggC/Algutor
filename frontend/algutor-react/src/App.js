@@ -58,9 +58,9 @@ const App = () => {
           }}
           className="app-function-container"
         >
-          <div className="app-function" onClick={() => navigate('/question')}>代码分析</div>
+          <div className="app-function" onClick={() => navigate('/analysis')}>代码分析</div>
           <div className="app-function" onClick={() => navigate('/knowledge')}>知识点管理</div>
-          <div className="app-function" onClick={() => navigate('/answer')}>AI编程助手</div>
+          <div className="app-function" onClick={() => navigate('/ai/explain')}>AI编程助手</div>
         </div>
         {/* 相关功能 */}
         <div className="app-h2" id="about"><h2>关于我们</h2></div>

@@ -30,6 +30,30 @@
   background: rgba(255, 255, 255, 0.12);
 }
 
+.knowledge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.knowledge-search-box {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 24px;
+  position: relative;
+}
+
+.knowledge-input-search .ant-input {
+  width: 200px;
+  transition: width 0.3s ease;
+}
+
+.knowledge-input-search .ant-input:focus {
+  width: 400px;
+}
+
 /* 页头标题 */
 .knowledge-title {
   margin: 0;
@@ -46,6 +70,12 @@
   color: #262626;
   /* AntD 灰 10 */
   line-height: 1;
+  /* 溢出隐藏 */
+  overflow: hidden;
+  /* 文本溢出显示省略号 */
+  text-overflow: ellipsis;
+  /* 强制文字一行显示，不换行 */
+  white-space: nowrap;
 }
 
 /* 左侧 3 px 品牌色高亮条 */
@@ -198,11 +228,19 @@
   .allpage-content-left-item {
     max-width: 73px;
   }
+
+  .knowledge-input-search .ant-input {
+    max-width: 100px;
+  }
 }
 
 @media (max-width: 359px) {
   .allpage-knowledge-minner-hidden {
     display: none;
+  }
+
+  .knowledge-input-search .ant-input {
+    max-width: 80px;
   }
 }
 
@@ -333,6 +371,29 @@
 
 .topicpage-explanation:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.topicpage-code-item {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #4e5969;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  padding-bottom: 16px;
+  margin-bottom: 6px;
+}
+
+.topicpage-code-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.topicpage-code-content {
+  padding: 16px;
+  border: 2px solid #f5f5f5;
+  border-radius: 16px;
+  margin: 0 16px;
 }
 
 /* ---- 弹窗内代码区域 ---- */

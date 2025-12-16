@@ -16,7 +16,7 @@ const items = [UserOutlined, VideoCameraOutlined, UploadOutlined, UserOutlined].
     label: `nav ${index + 1}`,
   }),
 );
-const Question = () => {
+const Analysis = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -78,4 +78,4 @@ const Question = () => {
     </Layout >
   );
 };
-export default Question;
+export default Analysis;
