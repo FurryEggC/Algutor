@@ -37,6 +37,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # 初始化数据库
 db.init_app(app)
 
+
 @app.route('/api/ping', methods=['GET'])
 def ping():
     return jsonify({
@@ -44,6 +45,7 @@ def ping():
         "service": "Knowledge Base API",
         "version": "0.10"
     })
+
 
 @app.route('/api/password', methods=['POST'])
 def password():
@@ -336,22 +338,24 @@ def ai_debug_code():
         print(f"AI代码调试接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
 
+
 def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
     """执行Python代码并返回结果"""
-    start_time = time.time()
+    start_time = time.perf_counter()
     temp_file = None
     temp_file_path = None
-    
+
     try:
         # 创建临时文件存储Python代码
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
             temp_file.write(code)
             temp_file_path = temp_file.name
-        
+
         # 构建命令列表
         cmd = [sys.executable, temp_file_path] + args
-        
+
         # 执行代码
+        run_start_time = time.perf_counter()
         result = subprocess.run(
             cmd,
             input=input_data,
@@ -359,18 +363,20 @@ def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
             text=True,
             timeout=timeout
         )
-        
-        # 计算执行时间
-        execution_time = round(time.time() - start_time, 3)
+        run_time = round(time.perf_counter() - run_start_time, 3)
 
+        # 计算总执行时间
+        total_execution_time = round(time.perf_counter() - start_time, 3)
 
         return {
             "status": "success",
             "output": result.stdout,
             "error": result.stderr,
-            "execution_time": execution_time
+            "compile_time": 0.0,
+            "run_time": run_time,
+            "execution_time": total_execution_time
         }
-        
+
     except subprocess.TimeoutExpired:
         return {
             "status": "error",
@@ -391,61 +397,74 @@ def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
             except:
                 pass
 
+
 def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
     """执行C代码并返回结果"""
-    start_time = time.time()
+    start_time = time.perf_counter()
     temp_dir = None
-    
+
     try:
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
-        
+
         # 生成唯一文件名
         file_name = f"program_{uuid.uuid4().hex}"
         source_path = os.path.join(temp_dir, f"{file_name}.c")
         executable_path = os.path.join(temp_dir, file_name)
-        
+
         # 写入C代码
         with open(source_path, 'w') as f:
             f.write(code)
-        
+
+        env = os.environ.copy()
+        env['PATH'] = os.getenv("ENV_PATH")
+
         # 编译C代码
-        compile_cmd = ["gcc", source_path, "-o", executable_path]
+        compile_start_time = time.perf_counter()
+        compile_cmd = [os.getenv("C_COMPILER_PATH"), source_path, "-o", executable_path]
         compile_result = subprocess.run(
             compile_cmd,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
-        
+        compile_time = round(time.perf_counter() - compile_start_time, 3)
+
         if compile_result.returncode != 0:
             # 编译失败
             return {
                 "status": "error",
                 "message": "代码编译失败",
-                "error": compile_result.stderr
+                "error": compile_result.stderr,
+                "compile_time": compile_time
             }, 500
-        
+
         # 执行编译后的程序
+        run_start_time = time.perf_counter()
         cmd = [executable_path] + args
         execute_result = subprocess.run(
             cmd,
             input=input_data,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
-        
-        # 计算执行时间
-        execution_time = round(time.time() - start_time, 3)
-        
+        run_time = round(time.perf_counter() - run_start_time, 3)
+
+        # 计算总执行时间
+        total_execution_time = round(time.perf_counter() - start_time, 3)
+
         return {
             "status": "success",
             "output": execute_result.stdout,
             "error": execute_result.stderr,
-            "execution_time": execution_time
+            "compile_time": compile_time,
+            "run_time": run_time,
+            "execution_time": total_execution_time
         }
-        
+
     except subprocess.TimeoutExpired:
         return {
             "status": "error",
@@ -466,61 +485,74 @@ def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
             except:
                 pass
 
+
 def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
     """执行C++代码并返回结果"""
-    start_time = time.time()
+    start_time = time.perf_counter()
     temp_dir = None
-    
+
     try:
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
-        
+
         # 生成唯一文件名
         file_name = f"program_{uuid.uuid4().hex}"
         source_path = os.path.join(temp_dir, f"{file_name}.cpp")
         executable_path = os.path.join(temp_dir, file_name)
-        
+
         # 写入C++代码
         with open(source_path, 'w') as f:
             f.write(code)
-        
+
+        env = os.environ.copy()
+        env['PATH'] = os.getenv("ENV_PATH")
+
         # 编译C++代码
-        compile_cmd = ["g++", source_path, "-o", executable_path]
+        compile_start_time = time.perf_counter()
+        compile_cmd = [os.getenv("CPP_COMPILER_PATH"), source_path, "-o", executable_path]
         compile_result = subprocess.run(
             compile_cmd,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
-        
+        compile_time = round(time.perf_counter() - compile_start_time, 3)
+
         if compile_result.returncode != 0:
             # 编译失败
             return {
                 "status": "error",
                 "message": "代码编译失败",
-                "error": compile_result.stderr
+                "error": compile_result.stderr,
+                "compile_time": compile_time
             }, 500
-        
+
         # 执行编译后的程序
+        run_start_time = time.perf_counter()
         cmd = [executable_path] + args
         execute_result = subprocess.run(
             cmd,
             input=input_data,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
-        
-        # 计算执行时间
-        execution_time = round(time.time() - start_time, 3)
-        
+        run_time = round(time.perf_counter() - run_start_time, 3)
+
+        # 计算总执行时间
+        total_execution_time = round(time.perf_counter() - start_time, 3)
+
         return {
             "status": "success",
             "output": execute_result.stdout,
             "error": execute_result.stderr,
-            "execution_time": execution_time
+            "compile_time": compile_time,
+            "run_time": run_time,
+            "execution_time": total_execution_time
         }
-        
+
     except subprocess.TimeoutExpired:
         return {
             "status": "error",
@@ -541,19 +573,20 @@ def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
             except:
                 pass
 
+
 def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
     """执行Java代码并返回结果"""
-    start_time = time.time()
+    start_time = time.perf_counter()
     temp_dir = None
-    
+
     try:
         # 创建临时目录
         temp_dir = tempfile.mkdtemp()
-        
+
         # 检查是否有package声明
         package_match = re.search(r'^\s*package\s+([\w.]+);', code.strip(), re.MULTILINE)
         package_name = package_match.group(1) if package_match else None
-        
+
         # 查找public class名称
         class_match = re.search(r'public\s+class\s+(\w+)', code)
         if not class_match:
@@ -563,12 +596,12 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             code = f"public class {class_name} {{\n{code}\n}}"
         else:
             class_name = class_match.group(1)
-        
+
         # 如果没有package声明，添加默认的package声明
         if not package_name:
             package_name = "main"
             code = f"package {package_name};\n\n{code}"
-        
+
         # 生成与package结构相对应的目录结构
         if package_name:
             package_dir = os.path.join(temp_dir, *package_name.split('.'))
@@ -576,14 +609,14 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             source_path = os.path.join(package_dir, f"{class_name}.java")
         else:
             source_path = os.path.join(temp_dir, f"{class_name}.java")
-        
+
         # 写入Java代码
         with open(source_path, 'w') as f:
             f.write(code)
 
         # 获取Java编译器和运行时路径
         javac_path = os.getenv("JAVA_COMPILER_PATH", "javac")  # 默认使用系统PATH中的javac
-        java_path = os.getenv("JAVA_RUNTIME_PATH", "java")    # 默认使用系统PATH中的java
+        java_path = os.getenv("JAVA_RUNTIME_PATH", "java")  # 默认使用系统PATH中的java
 
         # 检查Java环境是否存在
         java_available = False
@@ -626,6 +659,7 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             }, 500
 
         # 编译Java代码
+        compile_start_time = time.perf_counter()
         compile_cmd = [javac_path, "-encoding", "UTF-8", source_path]
         compile_result = subprocess.run(
             compile_cmd,
@@ -633,16 +667,19 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             text=True,
             timeout=timeout
         )
+        compile_time = round(time.perf_counter() - compile_start_time, 3)
 
         if compile_result.returncode != 0:
             # 编译失败
             return {
                 "status": "error",
                 "message": "代码编译失败",
-                "error": compile_result.stderr
+                "error": compile_result.stderr,
+                "compile_time": compile_time
             }, 500
-        
+
         # 执行编译后的程序 - 使用完整的包名+类名
+        run_start_time = time.perf_counter()
         full_class_name = f"{package_name}.{class_name}"
         cmd = [java_path, "-cp", temp_dir, full_class_name] + args
         execute_result = subprocess.run(
@@ -652,17 +689,20 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             text=True,
             timeout=timeout
         )
-        
-        # 计算执行时间
-        execution_time = round(time.time() - start_time, 3)
-        
+        run_time = round(time.perf_counter() - run_start_time, 3)
+
+        # 计算总执行时间
+        total_execution_time = round(time.perf_counter() - start_time, 3)
+
         return {
             "status": "success",
             "output": execute_result.stdout,
             "error": execute_result.stderr,
-            "execution_time": execution_time
+            "compile_time": compile_time,
+            "run_time": run_time,
+            "execution_time": total_execution_time
         }
-        
+
     except subprocess.TimeoutExpired:
         return {
             "status": "error",
@@ -683,6 +723,7 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             except:
                 pass
 
+
 @app.route('/api/execute', methods=['POST'])
 def execute_code():
     """代码执行"""
@@ -690,18 +731,18 @@ def execute_code():
         data = request.get_json()
         code = data.get('code', '')
         language = data.get('language', 'python').lower()
-        timeout = data.get('timeout', 10)  # 默认超时10秒
+        timeout = data.get('timeout', 3)  # 默认超时3秒
         args = data.get('args', [])  # 获取命令行参数列表
         input_data = data.get('input', '')  # 获取程序输入
 
-        if not language in ['python','c','cpp','c++','java']:
+        if not language in ['python', 'c', 'cpp', 'c++', 'java']:
             return {
                 "status": "error",
-                "error": f"未知语言: {language}, 预期: {['python','c','cpp','c++','java']}"
+                "error": f"未知语言: {language}, 预期: {['python', 'c', 'cpp', 'c++', 'java']}"
             }, 400
         if not code:
             return {
-                "status": "error", 
+                "status": "error",
                 "message": "代码不能为空"
             }, 400
 
@@ -711,7 +752,7 @@ def execute_code():
 
         if not isinstance(args, list):
             return {
-                "status": "error", 
+                "status": "error",
                 "message": "args参数必须是数组格式"
             }, 400
 
@@ -723,16 +764,13 @@ def execute_code():
             return execute_cpp(code, args, timeout, input_data)
         elif language == 'java':
             return execute_java(code, args, timeout, input_data)
-        
+
     except Exception as e:
         print(f"代码执行接口错误: {str(e)}")
         return {
-            "status": "error", 
+            "status": "error",
             "message": "服务器内部错误"
         }, 500
-
-
-
 
 
 # 健康检查端点

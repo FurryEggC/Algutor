@@ -341,9 +341,22 @@
   "status": "success",
   "output": "Enter your name: Hello, Alice!\n",
   "error": "",
+  "compile_time": 0.0,
+  "run_time": 0.123,
   "execution_time": 0.123
 }
 ```
+
+**响应参数说明**:
+
+| 参数名             | 类型     | 描述                  |
+| --------------- | ------ | ------------------- |
+| `status`        | string | 请求状态，success/error |
+| `output`        | string | 程序输出               |
+| `error`         | string | 错误信息（如果有）          |
+| `compile_time`  | number | 编译时间（秒），Python语言为0 |
+| `run_time`      | number | 运行时间（秒）            |
+| `execution_time`| number | 总执行时间（秒）            |
 
 **错误响应示例**:
 
