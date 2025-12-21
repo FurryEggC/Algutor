@@ -314,6 +314,7 @@
 | `code`     | string | 是   | 要执行的代码                 |
 | `language` | string | 否   | 代码语言，默认为 python，不区分大小写 |
 | `timeout`  | number | 否   | 执行超时时间（秒），默认为 10       |
+| `memorylimit`  | number | 否   | 执行内存限制（MB），默认为 1024       |
 | `args`     | array  | 否   | 命令行参数列表，默认为空数组        |
 | `input`    | string | 否   | 程序输入数据，将作为标准输入传递给执行的代码 |
 

@@ -339,7 +339,7 @@ def ai_debug_code():
         return jsonify({"error": "服务器内部错误"}), 500
 
 
-def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
+def execute_python(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
     """执行Python代码并返回结果"""
     start_time = time.perf_counter()
     temp_file = None
@@ -352,7 +352,7 @@ def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
             temp_file_path = temp_file.name
 
         # 构建命令列表
-        cmd = [sys.executable, temp_file_path] + args
+        cmd = ["prlimit", f"--as={memorylimit}", sys.executable, temp_file_path] + args
 
         # 执行代码
         run_start_time = time.perf_counter()
@@ -398,7 +398,7 @@ def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
                 pass
 
 
-def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
+def execute_c(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
     """执行C代码并返回结果"""
     start_time = time.perf_counter()
     temp_dir = None
@@ -426,7 +426,7 @@ def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
             compile_cmd,
             capture_output=True,
             text=True,
-            timeout=timeout,
+            timeout=10,
             env=env
         )
         compile_time = round(time.perf_counter() - compile_start_time, 3)
@@ -442,7 +442,7 @@ def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
 
         # 执行编译后的程序
         run_start_time = time.perf_counter()
-        cmd = [executable_path] + args
+        cmd = ["prlimit", f"--as={memorylimit}", executable_path] + args
         execute_result = subprocess.run(
             cmd,
             input=input_data,
@@ -486,7 +486,7 @@ def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
                 pass
 
 
-def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
+def execute_cpp(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
     """执行C++代码并返回结果"""
     start_time = time.perf_counter()
     temp_dir = None
@@ -514,7 +514,7 @@ def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
             compile_cmd,
             capture_output=True,
             text=True,
-            timeout=timeout,
+            timeout=10,
             env=env
         )
         compile_time = round(time.perf_counter() - compile_start_time, 3)
@@ -530,7 +530,7 @@ def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
 
         # 执行编译后的程序
         run_start_time = time.perf_counter()
-        cmd = [executable_path] + args
+        cmd = ["prlimit", f"--as={memorylimit}", executable_path] + args
         execute_result = subprocess.run(
             cmd,
             input=input_data,
@@ -574,7 +574,7 @@ def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
                 pass
 
 
-def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
+def execute_java(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
     """执行Java代码并返回结果"""
     start_time = time.perf_counter()
     temp_dir = None
@@ -665,7 +665,7 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             compile_cmd,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=10
         )
         compile_time = round(time.perf_counter() - compile_start_time, 3)
 
@@ -681,7 +681,7 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
         # 执行编译后的程序 - 使用完整的包名+类名
         run_start_time = time.perf_counter()
         full_class_name = f"{package_name}.{class_name}"
-        cmd = [java_path, "-cp", temp_dir, full_class_name] + args
+        cmd = ["prlimit", f"--as={memorylimit}", java_path, "-cp", temp_dir, full_class_name] + args
         execute_result = subprocess.run(
             cmd,
             input=input_data,
@@ -732,8 +732,21 @@ def execute_code():
         code = data.get('code', '')
         language = data.get('language', 'python').lower()
         timeout = data.get('timeout', 3)  # 默认超时3秒
+        memorylimit = data.get('memorylimit', 256)  # 默认内存限制256MB
         args = data.get('args', [])  # 获取命令行参数列表
         input_data = data.get('input', '')  # 获取程序输入
+
+        if memorylimit < 16 or memorylimit > 512:
+            return {
+                "status": "error",
+                "error": f"内存限制错误: {memorylimit}, 预期: [16-512]"
+            }, 400
+
+        if timeout < 1 or timeout > 6:
+            return {
+                "status": "error",
+                "error": f"超时时间错误: {timeout}, 预期: [1-6]"
+            }, 400
 
         if not language in ['python', 'c', 'cpp', 'c++', 'java']:
             return {
@@ -757,13 +770,13 @@ def execute_code():
             }, 400
 
         if language == 'python':
-            return execute_python(code, args, timeout, input_data)
+            return execute_python(code, args, timeout, memorylimit * 1024 * 1024, input_data)
         elif language == 'c':
-            return execute_c(code, args, timeout, input_data)
+            return execute_c(code, args, timeout, memorylimit * 1024 * 1024, input_data)
         elif language == 'cpp' or language == 'c++':
-            return execute_cpp(code, args, timeout, input_data)
+            return execute_cpp(code, args, timeout, memorylimit * 1024 * 1024, input_data)
         elif language == 'java':
-            return execute_java(code, args, timeout, input_data)
+            return execute_java(code, args, timeout, memorylimit * 1024 * 1024, input_data)
 
     except Exception as e:
         print(f"代码执行接口错误: {str(e)}")
