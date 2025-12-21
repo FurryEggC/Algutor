@@ -15,7 +15,7 @@ from openai import OpenAI
 from models import db, Knowledge
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "https://algutor.xyz"}})
+CORS(app, origins="*")
 
 # 在文件开头加载环境变量
 load_dotenv()
@@ -382,13 +382,13 @@ def execute_python(code: str, args: list, timeout: int, input_data: str = ''):
             "status": "error",
             "message": "代码执行超时",
             "error": f"执行超时：{timeout}秒"
-        }, 500
+        }
     except Exception as e:
         return {
             "status": "error",
             "message": f"代码执行失败: {str(e)}",
             "error": str(e)
-        }, 500
+        }
     finally:
         # 清理临时文件
         if temp_file_path and os.path.exists(temp_file_path):
@@ -438,7 +438,7 @@ def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
                 "message": "代码编译失败",
                 "error": compile_result.stderr,
                 "compile_time": compile_time
-            }, 500
+            }
 
         # 执行编译后的程序
         run_start_time = time.perf_counter()
@@ -470,13 +470,13 @@ def execute_c(code: str, args: list, timeout: int, input_data: str = ''):
             "status": "error",
             "message": "代码执行超时",
             "error": f"执行超时：{timeout}秒"
-        }, 500
+        }
     except Exception as e:
         return {
             "status": "error",
             "message": f"代码执行失败: {str(e)}",
             "error": str(e)
-        }, 500
+        }
     finally:
         # 清理临时目录
         if temp_dir:
@@ -526,7 +526,7 @@ def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
                 "message": "代码编译失败",
                 "error": compile_result.stderr,
                 "compile_time": compile_time
-            }, 500
+            }
 
         # 执行编译后的程序
         run_start_time = time.perf_counter()
@@ -558,13 +558,13 @@ def execute_cpp(code: str, args: list, timeout: int, input_data: str = ''):
             "status": "error",
             "message": "代码执行超时",
             "error": f"执行超时：{timeout}秒"
-        }, 500
+        }
     except Exception as e:
         return {
             "status": "error",
             "message": f"代码执行失败: {str(e)}",
             "error": str(e)
-        }, 500
+        }
     finally:
         # 清理临时目录
         if temp_dir:
@@ -656,7 +656,7 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
                 "status": "error",
                 "message": "Java环境未找到",
                 "error": "请安装Java开发工具包(JDK)并配置环境变量。需要javac和java命令都可用。"
-            }, 500
+            }
 
         # 编译Java代码
         compile_start_time = time.perf_counter()
@@ -676,7 +676,7 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
                 "message": "代码编译失败",
                 "error": compile_result.stderr,
                 "compile_time": compile_time
-            }, 500
+            }
 
         # 执行编译后的程序 - 使用完整的包名+类名
         run_start_time = time.perf_counter()
@@ -708,13 +708,13 @@ def execute_java(code: str, args: list, timeout: int, input_data: str = ''):
             "status": "error",
             "message": "代码执行超时",
             "error": f"执行超时：{timeout}秒"
-        }, 500
+        }
     except Exception as e:
         return {
             "status": "error",
             "message": f"代码执行失败: {str(e)}",
             "error": str(e)
-        }, 500
+        }
     finally:
         # 清理临时目录
         if temp_dir:
@@ -794,6 +794,6 @@ def health_check():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # 创建表
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
 
 
