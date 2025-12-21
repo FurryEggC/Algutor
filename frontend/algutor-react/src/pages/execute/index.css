@@ -1,0 +1,547 @@
+/* ====== 全局样式重置与基础设置 ====== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* ====== 返回按钮样式 ====== */
+.execute-return {
+  position: absolute;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 16px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+/* 图标与文字间距 */
+.execute-return .anticon {
+  margin-right: 8px;
+}
+
+/* hover 高亮效果 */
+.execute-return:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* 激活/点击瞬间效果 */
+.execute-return:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ====== 标题样式 ====== */
+.execute-h2 h2 {
+  font: 15px '微软雅黑';
+  margin: 16px 0;
+  color: rgb(156, 156, 156);
+}
+
+/* ====== 主内容容器 ====== */
+.execute-content-container {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  height: calc(100vh - 180px);
+  min-height: 600px;
+}
+
+/* ====== 代码容器 ====== */
+.execute-code-container {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: box-shadow 0.3s ease;
+}
+
+.execute-code-container:hover {
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
+}
+
+/* 让Form组件撑满容器高度 */
+.execute-code-container .ant-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 表单标签样式 */
+.execute-code-container .ant-form-item-label>label {
+  font-weight: 500;
+  color: #262626;
+  font-size: 14px;
+}
+
+/* 调整代码编辑器区域，确保它能占据剩余空间 */
+.execute-code {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  max-width: 48vw;
+}
+
+.execute-code .ant-form-item,
+.execute-code .ant-row,
+.execute-code .ant-col,
+.execute-code .ant-form-item-control-input {
+  flex: 1;
+  display: flex;
+}
+
+.execute-code .ant-form-item-control-input-content,
+.execute-code-editor {
+  height: 100%;
+}
+
+/* 确保代码编辑器本身能撑满父容器 */
+.execute-code-editor {
+  padding: 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background-color: #fafafa;
+  transition: all 0.3s ease;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.execute-code-editor:hover {
+  border-color: #d9d9d9;
+  background-color: #f5f5f5;
+}
+
+/* ====== 运行设置容器 ====== */
+.execute-run-container {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.execute-run-container-left {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+}
+
+.execute-run-container-left-language,
+.execute-run-container-left-limit,
+.execute-run-container-right {
+  background: transparent;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.execute-run-container-left-language:hover,
+.execute-run-container-left-limit:hover,
+.execute-run-container-right:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* ====== 结果容器 ====== */
+.execute-result-container {
+  flex: 1;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: box-shadow 0.3s ease;
+}
+
+.execute-result-container:hover {
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
+}
+
+/* ====== 编译信息区域 ====== */
+.execute-result-container-compile-information {
+  flex: 1;
+  min-height: 150px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s ease;
+  overflow-y: auto;
+}
+
+.execute-result-container-compile-information:hover {
+  border-color: #d9d9d9;
+  background-color: #f5f5f5;
+}
+
+/* 编译信息标题 */
+.execute-result-container-compile-information-title h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+/* 编译信息内容 */
+.execute-result-container-compile-information-content pre {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #595959;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 100%;
+}
+
+/* ====== 结果区域 ====== */
+.execute-result-container-result {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  min-height: 150px;
+}
+
+.execute-result-container-result-input,
+.execute-result-container-result-output {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+}
+
+.execute-result-container-result-input:hover,
+.execute-result-container-result-output:hover {
+  border-color: #d9d9d9;
+  background-color: #f5f5f5;
+}
+
+/* 输出区域标题 */
+.execute-result-container-result-input-title h3,
+.execute-result-container-result-output-title h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+/* 输出区域内容 */
+.execute-result-container-result-output-content pre {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #595959;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  flex: 1;
+}
+
+/* 输入文本区域样式 */
+.execute-result-container-result-input .ant-input-textarea {
+  background-color: transparent;
+  border: none;
+  resize: none;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #595959;
+  line-height: 1.5;
+}
+
+.execute-result-container-result-input .ant-input-textarea:focus {
+  box-shadow: none;
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.execute-result-container-result-input-content,
+.execute-result-container-result-input-content .ant-form-item,
+.execute-result-container-result-input-content .ant-row,
+.execute-result-container-result-input-content .ant-col,
+.execute-result-container-result-input-content .ant-form,
+.execute-result-container-result-input-content .ant-form-item-control-input,
+.execute-result-container-result-input-content .ant-form-item-control-input-content {
+  height: 100%;
+}
+
+.execute-result-container-result-input-content,
+.execute-result-container-result-output-content {
+  overflow: auto;
+  max-height: 600px;
+}
+
+/* ====== 响应式设计 ====== */
+@media(max-width: 1200px) {
+  .execute-content-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .execute-result-container-result {
+    flex-direction: column;
+  }
+
+  .execute-code {
+    max-width: 100%;
+  }
+}
+
+@media(max-width: 768px) {
+  .execute-content-container {
+    padding: 0 16px;
+  }
+
+  .execute-code-container,
+  .execute-result-container {
+    padding: 16px;
+  }
+
+  .execute-run-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .execute-run-container-left-language {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+}
+
+@media(max-width: 480px) {
+  .execute-content-container {
+    padding: 0 8px;
+  }
+
+  .execute-return .execute-hidden {
+    display: none;
+  }
+
+  .execute-return {
+    padding: 0 12px;
+  }
+
+  .execute-run-container-left {
+    flex-direction: column;
+  }
+}
+
+/* ====== Ant Design 组件样式覆盖 ====== */
+
+/* 按钮样式优化 */
+.ant-btn-primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  border-radius: 8px;
+  height: 40px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.ant-btn-primary:active {
+  background-color: #096dd9;
+  border-color: #096dd9;
+}
+
+/* 选择框样式优化 */
+.ant-select-selector {
+  border-radius: 8px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  border-color: #e8e8e8 !important;
+  transition: all 0.3s ease !important;
+}
+
+.ant-select-selector:hover {
+  border-color: #d9d9d9 !important;
+}
+
+.ant-select-focused .ant-select-selector {
+  border-color: #1890ff !important;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
+}
+
+/* 输入数字框样式优化 */
+.ant-input-number {
+  width: 120px;
+}
+
+.ant-input-number-input {
+  border-radius: 8px;
+  border-color: #e8e8e8;
+  transition: all 0.3s ease;
+}
+
+.ant-input-number-input:hover {
+  border-color: #d9d9d9;
+}
+
+.ant-input-number-focused .ant-input-number-input {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* 表单样式优化 */
+.ant-form-item {
+  margin-bottom: 16px;
+}
+
+.ant-form-item-label {
+  padding-bottom: 8px;
+}
+
+/* ====== 滚动条样式 ====== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Firefox 滚动条样式 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+/* ====== 导航容器 ====== */
+.execute-nav {
+  flex: 1;
+  /* 占满中间区域 */
+  display: flex;
+  justify-content: center;
+  /* 水平居中 */
+  align-items: center;
+  gap: 25px;
+  /* 项间距，可按需调 */
+}
+
+/* ====== 导航链接 ====== */
+.execute-nav a {
+  position: relative;
+  color: #d6e4ff;
+  /* 比纯白柔和，与 AntD 暗黑头对比不刺眼 */
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 4px 0;
+  /* 增大点击区域 */
+  transition: color 0.3s;
+}
+
+/* hover 高亮 */
+.execute-nav a:hover {
+  color: #fff;
+}
+
+/* 下划线动画 */
+.execute-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 2px;
+  background: #1890ff;
+  /* AntD 主色 */
+  border-radius: 1px;
+  transition: width 0.3s ease;
+}
+
+.execute-nav a:hover::after,
+.execute-nav a.active::after {
+  width: 100%;
+}
+
+/* ---- 暂无数据空态 ---- */
+.execute-compile-information {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 24px;
+  color: #8c8c8c;
+  /* 中性灰 */
+  background: #fafafa;
+  /* 比纯白更柔和 */
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+/* 大图标 */
+.execute-compile-information .anticon {
+  /* 圆形尺寸 */
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* 关键：flex 居中 */
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+  justify-content: center;
+  /* 水平居中 */
+
+  /* 去掉图标自带行高干扰 */
+  font-size: 80px;
+  color: #d9d9d9;
+  line-height: 1;
+}
+
+/* 主文案 */
+.execute-compile-information .empty-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #595959;
+  margin: 0;
+}
+
+/* 副文案 */
+.execute-compile-information .empty-desc {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
+}
