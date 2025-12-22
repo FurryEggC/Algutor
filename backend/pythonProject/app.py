@@ -97,263 +97,25 @@ def ping():
     return jsonify({
         "status": "alive",
         "service": "Knowledge Base API",
-        "version": "0.20",
-        "features": ["user_auth", "public_knowledge", "private_knowledge", "copy_from_public"]
+        "version": "1.00"
     })
 
 
-@app.route('/api/auth/send_verification_code', methods=['POST'])
-def send_verification_code():
-    """发送邮箱验证码接口"""
-    try:
-        data = request.get_json()
-        
-        if not data or 'email' not in data:
-            return jsonify({"status": "error", "message": "邮箱为必填项"}), 400
-        
-        email = data.get('email')
-        
-        # 验证邮箱格式
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-            return jsonify({"status": "error", "message": "邮箱格式不正确"}), 400
-        
-        # 检查该邮箱是否已被验证注册
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user and existing_user.email_verified:
-            return jsonify({"status": "error", "message": "该邮箱已被注册"}), 409
-        
-        # 检查是否在短时间内重复发送（防止恶意请求）
-        recent_verification = EmailVerification.query.filter_by(
-            email=email,
-            is_used=False
-        ).order_by(EmailVerification.created_at.desc()).first()
-        
-        if recent_verification:
-            # 计算距离上次发送的时间
-            from datetime import datetime, timedelta
-            time_diff = datetime.now() - recent_verification.created_at
-            if time_diff < timedelta(minutes=1):  # 1分钟内不允许重复发送
-                remaining_time = 60 - time_diff.seconds
-                return jsonify({
-                    "status": "error", 
-                    "message": f"请稍后再试，{remaining_time}秒后可重新发送"
-                }), 429
-        
-        # 创建新的验证码记录
-        verification = EmailVerification.create_verification(email)
-        
-        try:
-            # 在开发环境下，我们只打印验证码，不实际发送邮件
-            print(f"【开发环境】验证码 {verification.verification_code} 应发送至 {email}，有效期30分钟")
-            
-            # 真实邮件发送代码（在生产环境中使用）
-            # msg = Message('Algutor注册验证码', recipients=[email])
-            # msg.body = f"""您好！
-            # 
-            # 感谢您注册Algutor。您的验证码是：
-            # {verification.verification_code}
-            # 
-            # 此验证码有效期为30分钟，请在注册时输入。
-            # 
-            # 如果您没有进行此操作，请忽略此邮件。
-            # 
-            # --
-            # Algutor团队"""
-            # mail.send(msg)
-            
-        except Exception as mail_error:
-            # 发送失败时记录但不影响流程
-            print(f"邮件发送失败: {str(mail_error)}")
-            # 在实际生产环境中，可能需要添加重试机制或发送失败通知
-        
-        return jsonify({
-            "status": "success", 
-            "message": "验证码已发送，请注意查收",
-            "data": {
-                "email": email,
-                "expires_in": 30  # 验证码有效期（分钟）
-            }
-        })
-        
-    except Exception as e:
-        print(f"发送验证码出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
+@app.route('/api/password', methods=['POST'])
+def password():
+    data = request.get_json()
+    operator_pwd = os.getenv('OPERATOR_PASSWORD')
+    if not operator_pwd:
+        return jsonify({"status": "success"})
+
+    if data.get('password') != operator_pwd:
+        return jsonify({"status": "wrong password"})
+    return jsonify({"status": "success"})
 
 
-@app.route('/api/auth/register', methods=['POST'])
-def register():
-    """用户注册接口（需要邮箱验证码）"""
-    try:
-        data = request.get_json()
-        
-        # 验证数据
-        if not data:
-            return jsonify({"status": "error", "message": "请求数据不能为空"}), 400
-            
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
-        verification_code = data.get('verification_code')
-        
-        if not all([username, email, password, verification_code]):
-            return jsonify({"status": "error", "message": "用户名、邮箱、密码和验证码为必填项"}), 400
-        
-        # 验证用户名格式
-        if not re.match(r'^[a-zA-Z0-9_]{3,20}$', username):
-            return jsonify({"status": "error", "message": "用户名必须为3-20位字母、数字或下划线"}), 400
-        
-        # 验证邮箱格式
-        if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
-            return jsonify({"status": "error", "message": "邮箱格式不正确"}), 400
-        
-        # 验证密码长度
-        if len(password) < 6:
-            return jsonify({"status": "error", "message": "密码长度至少为6位"}), 400
-        
-        # 验证验证码
-        verification = EmailVerification.query.filter_by(
-            email=email,
-            verification_code=verification_code,
-            is_used=False
-        ).order_by(EmailVerification.created_at.desc()).first()
-        
-        if not verification:
-            return jsonify({"status": "error", "message": "验证码无效"}), 400
-        
-        if not verification.is_valid():
-            return jsonify({"status": "error", "message": "验证码已过期"}), 400
-        
-        if verification.attempt_count >= 5:  # 限制尝试次数
-            return jsonify({"status": "error", "message": "验证码尝试次数过多，请重新获取"}), 400
-        
-        # 检查用户名是否已存在
-        if User.query.filter_by(username=username).first():
-            return jsonify({"status": "error", "message": "用户名已存在"}), 409
-        
-        # 检查邮箱是否已被验证注册
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user and existing_user.email_verified:
-            return jsonify({"status": "error", "message": "该邮箱已被注册"}), 409
-        
-        # 创建新用户或更新现有未验证用户
-        if existing_user:
-            user = existing_user
-            user.username = username
-            user.set_password(password)
-        else:
-            user = User(username=username, email=email)
-            user.set_password(password)
-        
-        # 标记邮箱为已验证
-        user.email_verified = True
-        user.generate_api_key()
-        
-        # 标记验证码为已使用
-        verification.mark_as_used()
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        return jsonify({
-            "status": "success",
-            "message": "注册成功",
-            "data": {
-                "user": user.to_dict(),
-                "api_key": user.api_key
-            }
-        }), 201
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"注册出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
-
-
-@app.route('/api/auth/login', methods=['POST'])
-def login():
-    """用户登录接口"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({"status": "error", "message": "请求数据不能为空"}), 400
-            
-        email = data.get('email')
-        password = data.get('password')
-        
-        if not all([email, password]):
-            return jsonify({"status": "error", "message": "邮箱和密码为必填项"}), 400
-        
-        # 查找用户
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            return jsonify({"status": "error", "message": "用户不存在"}), 401
-        
-        # 验证密码
-        if not user.check_password(password):
-            return jsonify({"status": "error", "message": "密码错误"}), 401
-        
-        # 如果没有API密钥或需要重新生成
-        if not user.api_key:
-            user.generate_api_key()
-            db.session.commit()
-        
-        return jsonify({
-            "status": "success",
-            "message": "登录成功",
-            "data": {
-                "user": user.to_dict(),
-                "api_key": user.api_key
-            }
-        })
-        
-    except Exception as e:
-        print(f"登录出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
-
-
-@app.route('/api/auth/refresh', methods=['POST'])
-@auth_required
-def refresh_api_key():
-    """刷新API密钥"""
-    try:
-        user = g.current_user
-        user.generate_api_key()
-        db.session.commit()
-        
-        return jsonify({
-            "status": "success",
-            "message": "API密钥刷新成功",
-            "data": {
-                "api_key": user.api_key
-            }
-        })
-        
-    except Exception as e:
-        db.session.rollback()
-        print(f"刷新API密钥出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
-
-
-@app.route('/api/user/profile', methods=['GET'])
-@auth_required
-def get_user_profile():
-    """获取用户信息"""
-    try:
-        user = g.current_user
-        return jsonify({
-            "status": "success",
-            "data": user.to_dict()
-        })
-        
-    except Exception as e:
-        print(f"获取用户信息出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
-
-
-@app.route('/api/analyse', methods=['POST'])
-def analyse_code():
-    """代码分析接口 - 集成语法检查和知识点映射"""
+# @app.route('/api/analyse', methods=['POST'])
+# def analyse_code():
+#     """代码分析接口 - 集成语法检查和知识点映射"""
 
 
 @app.route('/api/knowledge/public', methods=['GET'])
@@ -783,276 +545,408 @@ def sync_from_public_knowledge():
             return jsonify({"status": "error", "message": "数据库错误"}), 500
     
     except Exception as e:
-        print(f"处理同步请求时出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
+        print(f"AI代码调试接口错误: {str(e)}")
+        return jsonify({"error": "服务器内部错误"}), 500
 
 
-# 保留旧的接口但添加权限控制和状态管理
-@app.route('/api/knowledge', methods=['GET'])
-def handle_knowledge_get():
-    """获取知识点接口（公开访问）"""
+def execute_python(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
+    """执行Python代码并返回结果"""
+    start_time = time.perf_counter()
+    temp_file = None
+    temp_file_path = None
+
     try:
-        # 获取公共知识库
-        all_knowledge = Knowledge.query.filter_by(is_public=True).all()
-        return jsonify({
+        # 创建临时文件存储Python代码
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as temp_file:
+            temp_file.write(code)
+            temp_file_path = temp_file.name
+
+        # 构建命令列表
+        cmd = ["/usr/bin/prlimit", f"--as={memorylimit}", sys.executable, temp_file_path] + args
+
+        # 执行代码
+        run_start_time = time.perf_counter()
+        result = subprocess.run(
+            cmd,
+            input=input_data,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+
+        end_time = time.perf_counter()
+
+        run_time = round(end_time - run_start_time, 3)
+
+        # 计算总执行时间
+        total_execution_time = round(end_time - start_time, 3)
+
+        return {
             "status": "success",
-            "data": [k.to_dict() for k in all_knowledge]
-        })
-    except Exception as e:
-        print(f"获取知识点时出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
+            "output": result.stdout,
+            "error": result.stderr,
+            "compile_time": 0.0,
+            "run_time": run_time,
+            "execution_time": total_execution_time
+        }
 
-@app.route('/api/knowledge', methods=['POST', 'PUT', 'DELETE'])
-@admin_required
-def handle_knowledge_admin():
-    """知识点管理接口（需要管理员权限）"""
-    try:
-        user = g.current_user
-        
-        if request.method == 'POST':
-            # 添加公共知识点
-            data = request.get_json()
-            if not data or "topic" not in data or "explanation" not in data:
-                return jsonify({"status": "error", "message": "必须提供topic和explanation字段"}), 400
-            
-            # 检查是否已存在相同主题的公共知识点
-            existing = Knowledge.query.filter_by(topic=data['topic'], is_public=True).first()
-            if existing:
-                return jsonify({"status": "error", "message": "已存在相同主题的公共知识点"}), 409
-            
-            # 创建新的公共知识点
-            knowledge = Knowledge(
-                topic=data['topic'],
-                explanation=data['explanation'],
-                example=data.get('example', []),
-                is_public=True,
-                created_by=user.id
-            )
-            db.session.add(knowledge)
-            db.session.commit()
-            
-            return jsonify({"status": "success", "data": knowledge.to_dict()}), 201
-        
-        elif request.method == 'PUT':
-            # 更新公共知识点
-            knowledge_id = request.args.get("id", type=int)
-            if not knowledge_id:
-                return jsonify({"status": "error", "message": "必须提供知识点ID"}), 400
-            
-            knowledge = Knowledge.query.filter_by(id=knowledge_id, is_public=True).first()
-            if not knowledge:
-                return jsonify({"status": "error", "message": "公共知识点不存在"}), 404
-            
-            data = request.get_json()
-            if data:
-                if "topic" in data:
-                    # 检查新主题是否与其他公共知识点冲突
-                    existing = Knowledge.query.filter_by(
-                        topic=data['topic'], 
-                        is_public=True,
-                        id=knowledge_id
-                    ).first()
-                    if existing and existing.id != knowledge_id:
-                        return jsonify({"status": "error", "message": "已存在相同主题的公共知识点"}), 409
-                    knowledge.topic = data['topic']
-                
-                if "explanation" in data:
-                    knowledge.explanation = data['explanation']
-                    
-                if "example" in data:
-                    knowledge.example = data['example']
-                
-                knowledge.updated_at = datetime.now()
-                db.session.commit()
-            
-            return jsonify({"status": "success", "data": knowledge.to_dict()})
-        
-        elif request.method == 'DELETE':
-            # 删除公共知识点
-            knowledge_id = request.args.get("id", type=int)
-            if not knowledge_id:
-                return jsonify({"status": "error", "message": "必须提供知识点ID"}), 400
-            
-            knowledge = Knowledge.query.filter_by(id=knowledge_id, is_public=True).first()
-            if not knowledge:
-                return jsonify({"status": "error", "message": "公共知识点不存在"}), 404
-            
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"代码执行失败: {str(e)}",
+            "error": str(e)
+        }
+    finally:
+        # 清理临时文件
+        if temp_file_path and os.path.exists(temp_file_path):
             try:
-                db.session.delete(knowledge)
-                db.session.commit()
-                return jsonify({"status": "success", "message": "知识点删除成功"})
-            except Exception as e:
-                db.session.rollback()
-                return jsonify({"status": "error", "message": "删除失败，可能有其他数据引用此知识点"}), 500
-    except Exception as e:
-        print(f"处理知识点管理时出错: {str(e)}")
-        return jsonify({"status": "error", "message": "服务器内部错误"}), 500
+                os.unlink(temp_file_path)
+            except:
+                pass
 
 
-@app.route('/api/ai/explain', methods=['POST'])
-def ai_explain_code():
-    """AI代码解释（带数据库保存）"""
+def execute_c(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
+    """执行C代码并返回结果"""
+    start_time = time.perf_counter()
+    temp_dir = None
+
     try:
-        data = request.get_json()
-        code = data.get('code', '')
-        language = data.get('language', 'python')
+        # 创建临时目录
+        temp_dir = tempfile.mkdtemp()
 
-        if not code:
-            return jsonify({"error": "代码不能为空"}), 400
+        # 生成唯一文件名
+        file_name = f"program_{uuid.uuid4().hex}"
+        source_path = os.path.join(temp_dir, f"{file_name}.c")
+        executable_path = os.path.join(temp_dir, file_name)
 
-        prompt = f"请用中文解释以下{language}代码的功能和工作原理：\n\n{code}"
+        # 写入C代码
+        with open(source_path, 'w') as f:
+            f.write(code)
 
-        try:
-            # 使用微型模型生成解释
-            explanation = "explanation..."
+        env = os.environ.copy()
+        env['PATH'] = os.getenv("ENV_PATH")
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=prompt,
-                generated_content=explanation,
-                language=language,
-                function_type="explain"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
+        # 编译C代码
+        compile_cmd = [os.getenv("C_COMPILER_PATH"), source_path, "-o", executable_path]
+        compile_start_time = time.perf_counter()
+        compile_result = subprocess.run(
+            compile_cmd,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=env
+        )
+        compile_time = round(time.perf_counter() - compile_start_time, 3)
 
-            return jsonify({
-                "status": "success",
-                "explanation": explanation,
-                "record_id": ai_record.id
-            })
-        except Exception as e:
-            db.session.rollback()
-            print(f"AI解释生成失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
+        if compile_result.returncode != 0:
+            # 编译失败
+            return {
+                "status": "error",
+                "message": "代码编译失败",
+                "error": compile_result.stderr,
+                "compile_time": compile_time
+            }
 
+        # 执行编译后的程序
+        cmd = ["/usr/bin/prlimit", f"--as={memorylimit}", executable_path] + args
+        run_start_time = time.perf_counter()
+        execute_result = subprocess.run(
+            cmd,
+            input=input_data,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=env
+        )
+
+        end_time = time.perf_counter()
+
+        run_time = round(end_time - run_start_time, 3)
+
+        # 计算总执行时间
+        total_execution_time = round(end_time - start_time, 3)
+
+        return {
+            "status": "success",
+            "output": execute_result.stdout,
+            "error": execute_result.stderr,
+            "compile_time": compile_time,
+            "run_time": run_time,
+            "execution_time": total_execution_time
+        }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }
     except Exception as e:
-        print(f"AI解释接口错误: {str(e)}")
-        return jsonify({"error": "服务器内部错误"}), 500
+        return {
+            "status": "error",
+            "message": f"代码执行失败: {str(e)}",
+            "error": str(e)
+        }
+    finally:
+        # 清理临时目录
+        if temp_dir:
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
 
 
-@app.route('/api/ai/generate', methods=['POST'])
-def ai_generate_code():
-    """AI代码生成（带数据库保存）"""
+def execute_cpp(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
+    """执行C++代码并返回结果"""
+    start_time = time.perf_counter()
+    temp_dir = None
+
     try:
-        data = request.get_json()
-        requirement = data.get('requirement', '')
-        language = data.get('language', 'python')
+        # 创建临时目录
+        temp_dir = tempfile.mkdtemp()
 
-        if not requirement:
-            return jsonify({"error": "需求描述不能为空"}), 400
+        # 生成唯一文件名
+        file_name = f"program_{uuid.uuid4().hex}"
+        source_path = os.path.join(temp_dir, f"{file_name}.cpp")
+        executable_path = os.path.join(temp_dir, file_name)
 
-        prompt = f"请根据以下需求编写{language}代码，要求代码规范且有详细注释：\n\n需求：{requirement}"
+        # 写入C++代码
+        with open(source_path, 'w') as f:
+            f.write(code)
 
-        try:
-            # 使用微型模型生成代码
-            code = "code..."
+        env = os.environ.copy()
+        env['PATH'] = os.getenv("ENV_PATH")
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=requirement,
-                generated_content=code,
-                language=language,
-                function_type="generate"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
+        # 编译C++代码
+        compile_cmd = [os.getenv("CPP_COMPILER_PATH"), source_path, "-o", executable_path]
+        compile_start_time = time.perf_counter()
+        compile_result = subprocess.run(
+            compile_cmd,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            env=env
+        )
+        compile_time = round(time.perf_counter() - compile_start_time, 3)
 
-            return jsonify({
-                "status": "success",
-                "code": code,
-                "record_id": ai_record.id
-            })
-        except Exception as e:
-            db.session.rollback()
-            print(f"AI代码生成失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
+        if compile_result.returncode != 0:
+            # 编译失败
+            return {
+                "status": "error",
+                "message": "代码编译失败",
+                "error": compile_result.stderr,
+                "compile_time": compile_time
+            }
 
+        # 执行编译后的程序
+        cmd = ["/usr/bin/prlimit", f"--as={memorylimit}", executable_path] + args
+        run_start_time = time.perf_counter()
+        execute_result = subprocess.run(
+            cmd,
+            input=input_data,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            env=env
+        )
+
+        end_time = time.perf_counter()
+
+        run_time = round(end_time - run_start_time, 3)
+
+        # 计算总执行时间
+        total_execution_time = round(end_time - start_time, 3)
+
+        return {
+            "status": "success",
+            "output": execute_result.stdout,
+            "error": execute_result.stderr,
+            "compile_time": compile_time,
+            "run_time": run_time,
+            "execution_time": total_execution_time
+        }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }
     except Exception as e:
-        print(f"AI生成接口错误: {str(e)}")
-        return jsonify({"error": "服务器内部错误"}), 500
+        return {
+            "status": "error",
+            "message": f"代码执行失败: {str(e)}",
+            "error": str(e)
+        }
+    finally:
+        # 清理临时目录
+        if temp_dir:
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
 
 
-@app.route('/api/ai/solve', methods=['POST'])
-def ai_solve_problem():
-    """AI算法题目求解（带数据库保存）"""
+def execute_java(code: str, args: list, timeout: int, memorylimit: int, input_data: str = ''):
+    """执行Java代码并返回结果"""
+    start_time = time.perf_counter()
+    temp_dir = None
+
     try:
-        data = request.get_json()
-        problem = data.get('problem', '')
-        language = data.get('language', 'python')
+        # 创建临时目录
+        temp_dir = tempfile.mkdtemp()
 
-        if not problem:
-            return jsonify({"error": "题目描述不能为空"}), 400
+        # 检查是否有package声明
+        package_match = re.search(r'^\s*package\s+([\w.]+);', code.strip(), re.MULTILINE)
+        package_name = package_match.group(1) if package_match else None
 
-        prompt = f"请解决以下算法题目，使用{language}编写代码，要求有详细注释和解题思路：\n\n题目：{problem}"
+        # 查找public class名称
+        class_match = re.search(r'public\s+class\s+(\w+)', code)
+        if not class_match:
+            # 如果没有找到public class，使用默认类名
+            class_name = "Main"
+            # 添加public class包装
+            code = f"public class {class_name} {{\n{code}\n}}"
+        else:
+            class_name = class_match.group(1)
 
-        try:
-            # 使用微型模型生成解决方案
-            solution = "solution..."
+        # 如果没有package声明，添加默认的package声明
+        if not package_name:
+            package_name = "main"
+            code = f"package {package_name};\n\n{code}"
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=problem,
-                generated_content=solution,
-                language=language,
-                function_type="solve"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
+        # 生成与package结构相对应的目录结构
+        if package_name:
+            package_dir = os.path.join(temp_dir, *package_name.split('.'))
+            os.makedirs(package_dir, exist_ok=True)
+            source_path = os.path.join(package_dir, f"{class_name}.java")
+        else:
+            source_path = os.path.join(temp_dir, f"{class_name}.java")
 
-            return jsonify({
-                "status": "success",
-                "solution": solution,
-                "record_id": ai_record.id
-            })
-        except Exception as e:
-            db.session.rollback()
-            print(f"AI解题失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
+        # 写入Java代码
+        with open(source_path, 'w') as f:
+            f.write(code)
 
-    except Exception as e:
-        print(f"AI解题接口错误: {str(e)}")
-        return jsonify({"error": "服务器内部错误"}), 500
+        # 获取Java编译器和运行时路径
+        javac_path = os.getenv("JAVA_COMPILER_PATH", "javac")  # 默认使用系统PATH中的javac
+        java_path = os.getenv("JAVA_RUNTIME_PATH", "java")  # 默认使用系统PATH中的java
 
+        # 检查Java环境是否存在
+        java_available = False
+        javac_available = False
 
-@app.route('/api/ai/debug', methods=['POST'])
-def ai_debug_code():
-    """AI代码调试（带数据库保存）"""
-    try:
-        data = request.get_json()
-        code = data.get('code', '')
-        error = data.get('error', '')
-        language = data.get('language', 'python')
+        # 直接检查配置的路径是否存在
+        if os.path.exists(javac_path):
+            javac_available = True
+        elif javac_path == "javac":
+            # 如果使用默认值，检查是否在系统PATH中
+            try:
+                if os.name == 'nt':  # Windows
+                    result = subprocess.run(['where', javac_path], capture_output=True, text=True)
+                    javac_available = result.returncode == 0
+                else:  # Linux/Mac
+                    result = subprocess.run(['which', javac_path], capture_output=True, text=True)
+                    javac_available = result.returncode == 0
+            except Exception:
+                pass
 
-        if not code:
-            return jsonify({"error": "代码不能为空"}), 400
+        if os.path.exists(java_path):
+            java_available = True
+        elif java_path == "java":
+            # 如果使用默认值，检查是否在系统PATH中
+            try:
+                if os.name == 'nt':  # Windows
+                    result = subprocess.run(['where', java_path], capture_output=True, text=True)
+                    java_available = result.returncode == 0
+                else:  # Linux/Mac
+                    result = subprocess.run(['which', java_path], capture_output=True, text=True)
+                    java_available = result.returncode == 0
+            except Exception:
+                pass
 
-        prompt = f"请帮助调试以下{language}代码：\n\n代码：{code}\n\n错误信息：{error}\n\n请分析错误原因并提供修复方案："
+        if not javac_available or not java_available:
+            return {
+                "status": "error",
+                "message": "Java环境未找到",
+                "error": "请安装Java开发工具包(JDK)并配置环境变量。需要javac和java命令都可用。"
+            }
 
-        try:
-            # 使用微型模型生成调试信息
-            debug_info = "debug_info..."
+        # 编译Java代码
+        compile_cmd = [javac_path, "-encoding", "UTF-8", source_path]
+        compile_start_time = time.perf_counter()
+        compile_result = subprocess.run(
+            compile_cmd,
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        compile_time = round(time.perf_counter() - compile_start_time, 3)
 
-            # 保存到数据库
-            ai_record = AICodeGeneration(
-                original_prompt=prompt,
-                generated_content=debug_info,
-                language=language,
-                function_type="debug"
-            )
-            db.session.add(ai_record)
-            db.session.commit()
+        if compile_result.returncode != 0:
+            # 编译失败
+            return {
+                "status": "error",
+                "message": "代码编译失败",
+                "error": compile_result.stderr,
+                "compile_time": compile_time
+            }
 
-            return jsonify({
-                "status": "success",
-                "debug_info": debug_info,
-                "record_id": ai_record.id
-            })
-        except Exception as e:
-            db.session.rollback()
-            print(f"AI调试失败: {str(e)}")
-            return jsonify({"error": f"AI服务暂时不可用: {str(e)}"}), 503
+        # 直接使用JVM参数限制内存，不使用prlimit
+        heap_memory_mb = max(64, memorylimit // (1024 * 1024))
 
+        # 构建Java运行命令，只使用JVM内存参数
+        full_class_name = f"{package_name}.{class_name}"
+
+        cmd = [
+                  java_path,
+                  f"-Xmx{heap_memory_mb}m",  # 最大堆内存
+                  f"-Xms{max(16, heap_memory_mb // 2)}m",  # 初始堆内存
+                  f"-Xss256k",  # 线程栈大小
+                  f"-XX:MaxMetaspaceSize={max(32, heap_memory_mb // 4)}m",  # Metaspace限制
+                  f"-XX:+UseSerialGC",  # 使用串行GC
+                  "-cp",
+                  temp_dir,
+                  full_class_name
+              ] + args
+
+        run_start_time = time.perf_counter()
+
+        execute_result = subprocess.run(
+            cmd,
+            input=input_data,
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+
+        end_time = time.perf_counter()
+
+        run_time = round(end_time - run_start_time, 3)
+
+        # 计算总执行时间
+        total_execution_time = round(end_time - start_time, 3)
+
+        return {
+            "status": "success",
+            "output": execute_result.stdout,
+            "error": execute_result.stderr,
+            "compile_time": compile_time,
+            "run_time": run_time,
+            "execution_time": total_execution_time
+        }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "error",
+            "message": "代码执行超时",
+            "error": f"执行超时：{timeout}秒"
+        }
     except Exception as e:
         print(f"AI调试接口错误: {str(e)}")
         return jsonify({"error": "服务器内部错误"}), 500
