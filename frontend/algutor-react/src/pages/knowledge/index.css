@@ -183,8 +183,6 @@
   padding-left: 12px;
   /* 溢出隐藏 */
   overflow: hidden;
-  /* 文本溢出显示省略号 */
-  text-overflow: ellipsis;
   /* 强制文字一行显示，不换行 */
   white-space: nowrap;
 }
@@ -231,6 +229,13 @@
 
   .knowledge-input-search .ant-input {
     max-width: 100px;
+  }
+
+  .allpage-content-left-item {
+    max-width: 61px;
+    overflow-x: scroll;
+    scrollbar-width: none;
+    /* Firefox 隐藏 */
   }
 }
 

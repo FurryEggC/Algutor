@@ -34,6 +34,7 @@ const Explain = () => {
           "code": values.code,
         }
       })
+      console.log(res)
       setExplanation(res.data.explanation);
       setCanSubmit(true);
       setButtonText('提交代码');

@@ -911,7 +911,7 @@ function Knowledge() {
       <Layout style={{ display: 'flex', flexDirection: 'column' }}>
         <Header style={{ padding: 0, background: token.colorBgContainer }} >
           <div className="knowledge-header">
-            <h2 className="knowledge-title">{nav.find((i) => i.key === selectedKey)?.label}</h2>
+            <h2 className="knowledge-title" style={{ maxWidth: '64px', overflowX: 'scroll', scrollbarWidth: 'none' }}>{nav.find((i) => i.key === selectedKey)?.label}</h2>
             <div className="knowledge-search-box">
               <Search
                 placeholder="请输入关键词搜索..."

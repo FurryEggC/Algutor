@@ -111,7 +111,7 @@ h1 {
   justify-content: center;
   /* 水平居中 */
   align-items: center;
-  gap: 40px;
+  gap: 24px;
   /* 项间距，可按需调 */
 }
 

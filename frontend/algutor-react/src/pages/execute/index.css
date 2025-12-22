@@ -106,6 +106,10 @@ body {
   display: flex;
 }
 
+.execute-code .ant-row {
+  flex-direction: column !important;
+}
+
 .execute-code .ant-form-item-control-input-content,
 .execute-code-editor {
   height: 100%;

@@ -8,19 +8,19 @@ const { Header, Content, Footer } = Layout;
 const items = [
   {
     key: '1',
-    label: <Link to="/ai/explain"><span className='ai-hidden'>代码</span>解释</Link>,
+    label: <Link to="/ai/explain">代码解释</Link>,
   },
   {
     key: '2',
-    label: <Link to="/ai/generate"><span className='ai-hidden'>代码</span>生成</Link>,
+    label: <Link to="/ai/generate">代码生成</Link>,
   },
   {
     key: '3',
-    label: <Link to="/ai/debug"><span className='ai-hidden'>代码</span>调试</Link>,
+    label: <Link to="/ai/debug">代码调试</Link>,
   },
   {
     key: '4',
-    label: <Link to="/ai/solve"><span className='ai-hidden'>算法</span>求解</Link>,
+    label: <Link to="/ai/solve">算法求解</Link>,
   }
 ]
 const AI = () => {
